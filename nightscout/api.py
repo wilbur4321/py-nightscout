@@ -34,7 +34,7 @@ class Api(object):
             'Accept': 'application/json'
         }
         if self.api_secret:
-            headers['api-secret'] = hashlib.sha1(self.api_secret).hexdigest()
+            headers['api-secret'] = hashlib.sha1(self.api_secret.encode("utf-8")).hexdigest()
         return headers
 
     def get_sgvs(self, params={}):
@@ -58,7 +58,9 @@ class Api(object):
         Returns:
           A list of Treatments
         """
+
         r = requests.get(self.site_url + '/api/v1/treatments.json', headers=self.request_headers(), params=params)
+        
         if len(r.content) > 0:
             return [Treatment.new_from_json_dict(x) for x in r.json()]
         else:
