@@ -1,12 +1,14 @@
 """A library that provides a Python interface to Nightscout"""
 import requests
 import hashlib
+
 from nightscout import (
     SGV,
     Treatment,
-    ProfileDefinition,
+    # ProfileDefinition,
     ProfileDefinitionSet,
 )
+
 
 class Api(object):
     """A python interface into Nightscout
@@ -29,12 +31,11 @@ class Api(object):
         self.api_secret = api_secret
 
     def request_headers(self):
-        headers = {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-        }
+        headers = {"Content-Type": "application/json", "Accept": "application/json"}
         if self.api_secret:
-            headers['api-secret'] = hashlib.sha1(self.api_secret.encode("utf-8")).hexdigest()
+            headers["api-secret"] = hashlib.sha1(
+                self.api_secret.encode("utf-8")
+            ).hexdigest()
         return headers
 
     def get_sgvs(self, params={}):
@@ -46,7 +47,11 @@ class Api(object):
         Returns:
           A list of SGV objects
         """
-        r = requests.get(self.site_url + '/api/v1/entries/sgv.json', headers=self.request_headers(), params=params)
+        r = requests.get(
+            self.site_url + "/api/v1/entries/sgv.json",
+            headers=self.request_headers(),
+            params=params,
+        )
         return [SGV.new_from_json_dict(x) for x in r.json()]
 
     def get_treatments(self, params={}):
@@ -59,8 +64,12 @@ class Api(object):
           A list of Treatments
         """
 
-        r = requests.get(self.site_url + '/api/v1/treatments.json', headers=self.request_headers(), params=params)
-        
+        r = requests.get(
+            self.site_url + "/api/v1/treatments.json",
+            headers=self.request_headers(),
+            params=params,
+        )
+
         if len(r.content) > 0:
             return [Treatment.new_from_json_dict(x) for x in r.json()]
         else:
@@ -75,5 +84,9 @@ class Api(object):
         Returns:
           ProfileDefinitionSet
         """
-        r = requests.get(self.site_url + '/api/v1/profile.json', headers=self.request_headers(), params=params)
+        r = requests.get(
+            self.site_url + "/api/v1/profile.json",
+            headers=self.request_headers(),
+            params=params,
+        )
         return ProfileDefinitionSet.new_from_json_array(r.json())
