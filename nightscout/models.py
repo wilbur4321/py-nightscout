@@ -25,6 +25,30 @@ class BaseModel(object):
         return c
 
 
+class ServerStatus(BaseModel):
+    """Server Info and Status
+
+    Server side status, default settings and capabilities
+
+    Attributes:
+        status (string): Server status
+        version (string): Server version
+        name (string): Server name
+        apiEnabled (boolean): If the API is enabled
+    """
+
+    def __init__(self, **kwargs):
+        self.param_defaults = {
+            "status": None,
+            "version": None,
+            "name": None,
+            "apiEnabled": None,
+        }
+
+        for (param, default) in self.param_defaults.items():
+            setattr(self, param, kwargs.get(param, default))
+
+
 class SGV(BaseModel):
     """Sensor Glucose Value
 

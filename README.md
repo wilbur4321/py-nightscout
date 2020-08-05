@@ -52,5 +52,5 @@ To fetch recent treatments (boluses, temp basals):
 ### Server Status
 
     server_status = api.get_status()
+
     print(server_status.status)
-    	print(server_status.version)

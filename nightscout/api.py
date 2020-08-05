@@ -5,8 +5,8 @@ import hashlib
 from nightscout import (
     SGV,
     Treatment,
-    # ProfileDefinition,
     ProfileDefinitionSet,
+    ServerStatus,
 )
 
 
@@ -53,6 +53,18 @@ class Api(object):
             params=params,
         )
         return [SGV.new_from_json_dict(x) for x in r.json()]
+
+    def get_server_status(self, params={}):
+        """Fetch server status
+        Returns:
+          The current server status
+        """
+        r = requests.get(
+            self.site_url + "/api/v1/status.json",
+            headers=self.request_headers(),
+            params=params,
+        )
+        return ServerStatus.new_from_json_dict(r.json())
 
     def get_treatments(self, params={}):
         """Fetch treatments

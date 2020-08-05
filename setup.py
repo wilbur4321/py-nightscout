@@ -6,7 +6,7 @@ https://github.com/nightscout/cgm-remote-monitor
 """
 
 # Always prefer setuptools over distutils
-from setuptools import setup, find_packages
+from setuptools import setup, find_namespace_packages
 
 # To use a consistent encoding
 from codecs import open
@@ -60,7 +60,8 @@ setup(
     keywords="nightscout api client development",
     # You can just specify the packages manually here if your project is
     # simple. Or you can use find_packages().
-    packages=find_packages(exclude=["contrib", "docs", "tests"]),
+    packages=find_namespace_packages(),
+    include_package_data=True,
     # Alternatively, if you want to distribute just a my_module.py, uncomment
     # this:
     #   py_modules=["my_module"],
@@ -73,7 +74,7 @@ setup(
     # dependencies). You can install these using the following syntax,
     # for example:
     # $ pip install -e .[dev,test]
-    extras_require={"dev": ["check-manifest"], "test": ["coverage", "httmock"],},
+    extras_require={"dev": ["check-manifest"], "test": ["coverage", "httmock"]},
     # If there are data files included in your packages that need to be
     # installed, specify them here.  If using Python 2.6 or less, then these
     # have to be included in MANIFEST.in as well.
