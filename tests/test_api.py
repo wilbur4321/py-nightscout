@@ -8,7 +8,7 @@ import pytz
 
 @all_requests
 def sgv_response(url, request):
-    return '[{"_id":"58be818183ab6d6632419687","sgv":184,"date":1488879925000,"dateString":"2017-03-07T09:45:25.000Z","trend":3,"direction":"FortyFiveUp","device":"share2","type":"sgv"},{"_id":"58be805583ab6d6632419684","sgv":168,"date":1488879625000,"dateString":"2017-03-07T09:40:25.000Z","trend":3,"direction":"FortyFiveUp","device":"share2","type":"sgv"},{"_id":"58be7f2983ab6d6632419681","sgv":169,"date":1488879325000,"dateString":"2017-03-07T09:35:25.000Z","trend":3,"direction":"FortyFiveUp","device":"share2","type":"sgv"}]'
+    return '[{"_id":"5f2b01f5c3d0ac7c4090e223","device":"xDrip-LimiTTer","date":1596654066533,"dateString":"2020-08-05T19:01:06.533Z","sgv":169,"delta":-5.257,"direction":"FortyFiveDown","type":"sgv","filtered":182823.5157,"unfiltered":182823.5157,"rssi":100,"noise":1,"sysTime":"2020-08-05T19:01:06.533Z","utcOffset":-180},{"_id":"5f2b00c8c3d0ac7c4090e222","device":"xDrip-LimiTTer","date":1596653766048,"dateString":"2020-08-05T18:56:06.048Z","sgv":174,"delta":-2.028,"direction":"Flat","type":"sgv","filtered":187411.75065,"unfiltered":187411.75065,"rssi":100,"noise":1,"sysTime":"2020-08-05T18:56:06.048Z","utcOffset":-180},{"_id":"5f2aff9dc3d0ac7c4090e221","device":"xDrip-LimiTTer","date":1596653466421,"dateString":"2020-08-05T18:51:06.421Z","sgv":176,"delta":-5.66,"direction":"FortyFiveDown","type":"sgv","filtered":189176.4564,"unfiltered":189176.4564,"rssi":100,"noise":1,"sysTime":"2020-08-05T18:51:06.421Z","utcOffset":-180},{"_id":"5f2afe70c3d0ac7c4090e220","device":"xDrip-LimiTTer","date":1596653165840,"dateString":"2020-08-05T18:46:05.840Z","sgv":182,"delta":-2.97,"direction":"Flat","type":"sgv","filtered":194117.63249999998,"unfiltered":194117.63249999998,"rssi":100,"noise":1,"sysTime":"2020-08-05T18:46:05.840Z","utcOffset":-180},{"_id":"5f2afd44c3d0ac7c4090e21f","device":"xDrip-LimiTTer","date":1596652865845,"dateString":"2020-08-05T18:41:05.845Z","sgv":185,"delta":-5.946,"direction":"FortyFiveDown","type":"sgv","filtered":196705.8676,"unfiltered":196705.8676,"rssi":100,"noise":1,"sysTime":"2020-08-05T18:41:05.845Z","utcOffset":-180},{"_id":"5f2afc18c3d0ac7c4090e21e","device":"xDrip-LimiTTer","date":1596652566127,"dateString":"2020-08-05T18:36:06.127Z","sgv":191,"delta":-5.772,"direction":"FortyFiveDown","type":"sgv","filtered":201882.33779999998,"unfiltered":201882.33779999998,"rssi":100,"noise":1,"sysTime":"2020-08-05T18:36:06.127Z","utcOffset":-180},{"_id":"5f2afa42c3d0ac7c4090e21d","device":"xDrip-LimiTTer","date":1596652095925,"dateString":"2020-08-05T18:28:15.925Z","sgv":200,"delta":-3.51,"direction":"Flat","type":"sgv","filtered":209764.69014999998,"unfiltered":209764.69014999998,"rssi":100,"noise":1,"sysTime":"2020-08-05T18:28:15.925Z","utcOffset":-180},{"_id":"5f2af916c3d0ac7c4090e21c","device":"xDrip-LimiTTer","date":1596651795916,"dateString":"2020-08-05T18:23:15.916Z","sgv":203,"delta":-5.4,"direction":"FortyFiveDown","type":"sgv","filtered":212823.51345,"unfiltered":212823.51345,"rssi":100,"noise":1,"sysTime":"2020-08-05T18:23:15.916Z","utcOffset":-180},{"_id":"5f2af7eac3d0ac7c4090e21b","device":"xDrip-LimiTTer","date":1596651495909,"dateString":"2020-08-05T18:18:15.909Z","sgv":209,"delta":2.702,"direction":"Flat","type":"sgv","filtered":217529.39544999998,"unfiltered":217529.39544999998,"rssi":100,"noise":1,"sysTime":"2020-08-05T18:18:15.909Z","utcOffset":-180},{"_id":"5f2af6bec3d0ac7c4090e21a","device":"xDrip-LimiTTer","date":1596651196104,"dateString":"2020-08-05T18:13:16.104Z","sgv":206,"delta":-4.454,"direction":"Flat","type":"sgv","filtered":215176.45445,"unfiltered":215176.45445,"rssi":100,"noise":1,"sysTime":"2020-08-05T18:13:16.104Z","utcOffset":-180}]'
 
 
 def treatments_response(url, request):
@@ -31,11 +31,12 @@ class TestAPI(unittest.TestCase):
         with HTTMock(sgv_response):
             entries = self.api.get_sgvs()
 
-        self.assertEqual(3, len(entries))
-        self.assertEqual(184, entries[0].sgv)
-        self.assertEqual("FortyFiveUp", entries[0].direction)
+        self.assertEqual(10, len(entries))
+        self.assertEqual(169, entries[0].sgv)
+        self.assertEqual("FortyFiveDown", entries[0].direction)
+        self.assertEqual(-5.257, entries[0].delta)
         self.assertEqual(
-            datetime(2017, 3, 7, 9, 45, 25, tzinfo=tzutc()), entries[0].date
+            datetime(2020, 8, 5, 19, 1, 6, 533000, tzinfo=tzutc()), entries[0].date
         )
 
     def test_get_treatments(self):
@@ -59,6 +60,7 @@ class TestAPI(unittest.TestCase):
         self.assertEqual(
             datetime(2017, 3, 2, 1, 37, tzinfo=tzutc()), profile_definition.startDate
         )
+        self.assertEqual("mg/dl", profile_definition.units)
 
         profile = profile_definition.get_default_profile()
         self.assertEqual(pytz.timezone("US/Central"), profile.timezone)

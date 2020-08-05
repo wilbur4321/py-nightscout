@@ -56,6 +56,7 @@ class SGV(BaseModel):
 
     Attributes:
         sgv (int): Glucose measurement value in mg/dl.
+        delta (float): Delta between current and previous value.
         date (datetime): The time of the measurement
         direction (string): One of ['DoubleUp', 'SingleUp', 'FortyFiveUp', 'Flat', 'FortyFiveDown', 'SingleDown', 'DoubleDown']
         device (string): the source of the measurement.  For example, 'share2', if pulled from Dexcom Share servers
@@ -64,6 +65,7 @@ class SGV(BaseModel):
     def __init__(self, **kwargs):
         self.param_defaults = {
             "sgv": None,
+            "delta": None,
             "date": None,
             "direction": None,
             "device": None,
@@ -328,6 +330,7 @@ class ProfileDefinition(BaseModel):
             "store": None,
             "startDate": None,
             "created_at": None,
+            "units": None,
         }
 
         for (param, default) in self.param_defaults.items():

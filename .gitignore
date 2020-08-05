@@ -46,6 +46,7 @@ develop-eggs
 lib
 lib64
 pip-wheel-metadata
+.pypirc
 
 # Logs
 *.log

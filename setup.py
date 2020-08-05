@@ -30,7 +30,7 @@ setup(
     # Versions should comply with PEP440.  For a discussion on single-sourcing
     # the version across setup.py and the project code, see
     # https://packaging.python.org/en/latest/single_source_version.html
-    version="1.0.0",
+    version="1.1.0",
     description="A library that provides a Python interface to Nightscout",
     long_description=long_description,
     # The project's main homepage.
@@ -49,7 +49,7 @@ setup(
         "Development Status :: 3 - Alpha",
         # Indicate who your project is intended for
         "Intended Audience :: Developers",
-        "Topic :: Software Development :: API Client",
+        "Topic :: Software Development :: Libraries :: Python Modules",
         # Pick your license as you wish (should match "license" above)
         "License :: OSI Approved :: MIT License",
         # Specify the Python versions you support here. In particular, ensure
