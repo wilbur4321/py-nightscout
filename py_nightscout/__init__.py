@@ -1,4 +1,4 @@
-from .models import (
+from .models import (  # noqa: F401
     SGV,
     Treatment,
     ProfileDefinition,
@@ -6,4 +6,4 @@ from .models import (
     ServerStatus,
 )
 
-from .api import Api
+from .api import Api  # noqa: F401

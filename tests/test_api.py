@@ -1,5 +1,5 @@
 import unittest
-import nightscout
+import py_nightscout as nightscout
 from datetime import datetime
 from dateutil.tz import tzutc
 from httmock import all_requests, HTTMock

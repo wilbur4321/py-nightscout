@@ -9,7 +9,7 @@ Based on [ps2/python-nightscout](https://github.com/ps2/python-nightscout)
 
 To create an instance of the nightscout.Api class, with no authentication:
 
-    import nightscout
+    import py_nightscout as nightscout
     api = nightscout.Api('https://yournightscoutsite.herokuapp.com')
 
 To use authentication, instantiate the nightscout.Api class with your

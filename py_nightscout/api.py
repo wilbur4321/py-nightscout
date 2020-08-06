@@ -38,7 +38,7 @@ class Api(object):
             ).hexdigest()
         return headers
 
-    def get_sgvs(self, params={}):
+    def get_sgvs(self, params={}) -> [SGV]:
         """Fetch sensor glucose values
         Args:
           params:
@@ -54,7 +54,7 @@ class Api(object):
         )
         return [SGV.new_from_json_dict(x) for x in r.json()]
 
-    def get_server_status(self, params={}):
+    def get_server_status(self, params={}) -> ServerStatus:
         """Fetch server status
         Returns:
           The current server status
@@ -66,7 +66,7 @@ class Api(object):
         )
         return ServerStatus.new_from_json_dict(r.json())
 
-    def get_treatments(self, params={}):
+    def get_treatments(self, params={}) -> [Treatment]:
         """Fetch treatments
         Args:
           params:
@@ -87,7 +87,7 @@ class Api(object):
         else:
             return []
 
-    def get_profiles(self, params={}):
+    def get_profiles(self, params={}) -> [ProfileDefinitionSet]:
         """Fetch profiles
         Args:
           params:

@@ -1,5 +1,5 @@
 import unittest
-from nightscout.models import (
+from py_nightscout.models import (
     ScheduleEntry,
     AbsoluteScheduleEntry,
     Schedule,
