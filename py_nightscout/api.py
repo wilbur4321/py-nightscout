@@ -1,13 +1,9 @@
 """A library that provides a Python interface to Nightscout"""
-import requests
 import hashlib
+from typing import Any, Callable, Optional
 
-from nightscout import (
-    SGV,
-    Treatment,
-    ProfileDefinitionSet,
-    ServerStatus,
-)
+from aiohttp import ClientSession, ClientTimeout
+from nightscout import SGV, ProfileDefinitionSet, ServerStatus, Treatment
 
 
 class Api(object):
@@ -25,20 +21,27 @@ class Api(object):
         >>> print([entry.sgv for entry in entries])
     """
 
-    def __init__(self, site_url, api_secret=None):
+    def __init__(
+        self,
+        host: str,
+        api_secret: Optional[str] = None,
+        session: Optional[ClientSession] = None,
+        timeout: Optional[ClientTimeout] = None,
+    ):
         """Instantiate a new Api object."""
-        self.site_url = site_url
-        self.api_secret = api_secret
+        self._host = host.strip("/")
+        self._api_kwargs = {"headers": self.request_headers(api_secret)}
+        if timeout:
+            self._api_kwargs["timeout"] = timeout
+        self._session = session
 
-    def request_headers(self):
+    def request_headers(self, api_secret: Optional[str] = None):
         headers = {"Content-Type": "application/json", "Accept": "application/json"}
-        if self.api_secret:
-            headers["api-secret"] = hashlib.sha1(
-                self.api_secret.encode("utf-8")
-            ).hexdigest()
+        if api_secret:
+            headers["api-secret"] = hashlib.sha1(api_secret.encode("utf-8")).hexdigest()
         return headers
 
-    def get_sgvs(self, params={}) -> [SGV]:
+    async def get_sgvs(self, params={}) -> [SGV]:
         """Fetch sensor glucose values
         Args:
           params:
@@ -47,26 +50,20 @@ class Api(object):
         Returns:
           A list of SGV objects
         """
-        r = requests.get(
-            self.site_url + "/api/v1/entries/sgv.json",
-            headers=self.request_headers(),
-            params=params,
-        )
-        return [SGV.new_from_json_dict(x) for x in r.json()]
+        json = await self.__get("/api/v1/entries/sgv.json")
 
-    def get_server_status(self, params={}) -> ServerStatus:
+        return [SGV.new_from_json_dict(x) for x in json]
+
+    async def get_server_status(self, params={}) -> ServerStatus:
         """Fetch server status
         Returns:
           The current server status
         """
-        r = requests.get(
-            self.site_url + "/api/v1/status.json",
-            headers=self.request_headers(),
-            params=params,
-        )
-        return ServerStatus.new_from_json_dict(r.json())
+        json = await self.__get("/api/v1/status.json")
 
-    def get_treatments(self, params={}) -> [Treatment]:
+        return ServerStatus.new_from_json_dict(json)
+
+    async def get_treatments(self, params={}) -> [Treatment]:
         """Fetch treatments
         Args:
           params:
@@ -76,18 +73,11 @@ class Api(object):
           A list of Treatments
         """
 
-        r = requests.get(
-            self.site_url + "/api/v1/treatments.json",
-            headers=self.request_headers(),
-            params=params,
-        )
+        json = await self.__get("/api/v1/treatments.json")
 
-        if len(r.content) > 0:
-            return [Treatment.new_from_json_dict(x) for x in r.json()]
-        else:
-            return []
+        return [Treatment.new_from_json_dict(x) for x in json]
 
-    def get_profiles(self, params={}) -> [ProfileDefinitionSet]:
+    async def get_profiles(self, params={}) -> [ProfileDefinitionSet]:
         """Fetch profiles
         Args:
           params:
@@ -96,9 +86,22 @@ class Api(object):
         Returns:
           ProfileDefinitionSet
         """
-        r = requests.get(
-            self.site_url + "/api/v1/profile.json",
-            headers=self.request_headers(),
-            params=params,
-        )
-        return ProfileDefinitionSet.new_from_json_array(r.json())
+        json = await self.__get("/api/v1/profile.json")
+        return ProfileDefinitionSet.new_from_json_array(json)
+
+    async def __get(self, path):
+        async def get(session: ClientSession):
+            async with session.get(
+                f"{self._host}{path}", **self._api_kwargs
+            ) as response:
+                response.raise_for_status()
+                return await response.json()
+
+        return await self.__call(get)
+
+    async def __call(self, handler: Callable[[ClientSession], Any]):
+        if not self._session:
+            async with ClientSession() as request_session:
+                return await handler(request_session)
+        else:
+            return await handler(self._session)

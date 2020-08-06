@@ -1,6 +1,4 @@
-requests
 python-dateutil
 coverage
-httmock
-pytest
 pytz
+aiohttp>=3.6.1

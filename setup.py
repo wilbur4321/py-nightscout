@@ -16,8 +16,8 @@ README = (HERE / "README.md").read_text()
 
 setup(
     name="py_nightscout",
-    version="1.1.1",
-    description="A library that provides a Python interface to Nightscout",
+    version="1.2.0",
+    description="A library that provides a Python async interface to Nightscout",
     long_description=README,
     long_description_content_type="text/markdown",
     url="https://github.com/marciogranzotto/py-nightscout",
@@ -25,7 +25,6 @@ setup(
     author_email="marciogranzotto@gmail.com",
     license="MIT",
     classifiers=[
-        "Development Status :: 3 - Alpha",
         "Intended Audience :: Developers",
         "Topic :: Software Development :: Libraries :: Python Modules",
         "License :: OSI Approved :: MIT License",
@@ -33,6 +32,5 @@ setup(
     ],
     keywords="nightscout api client development",
     packages=find_packages(exclude=["tests"]),
-    install_requires=["requests", "python-dateutil", "pytz"],
-    extras_require={"dev": ["check-manifest"], "test": ["coverage", "httmock"]},
+    install_requires=["python-dateutil", "pytz", "aiohttp>=3.6.1"],
 )

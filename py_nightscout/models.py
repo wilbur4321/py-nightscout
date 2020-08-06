@@ -1,5 +1,6 @@
-import dateutil.parser
 from datetime import datetime, timedelta
+
+import dateutil.parser
 import pytz
 
 

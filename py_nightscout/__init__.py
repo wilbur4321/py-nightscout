@@ -1,9 +1,8 @@
+from .api import Api  # noqa: F401
 from .models import (  # noqa: F401
     SGV,
-    Treatment,
     ProfileDefinition,
     ProfileDefinitionSet,
     ServerStatus,
+    Treatment,
 )
-
-from .api import Api  # noqa: F401
