@@ -3,7 +3,7 @@ import hashlib
 from typing import Any, Callable, Optional
 
 from aiohttp import ClientSession, ClientTimeout
-from nightscout import SGV, ProfileDefinitionSet, ServerStatus, Treatment
+from .models import SGV, ProfileDefinitionSet, ServerStatus, Treatment
 
 
 class Api(object):
@@ -23,13 +23,13 @@ class Api(object):
 
     def __init__(
         self,
-        host: str,
+        server_url: str,
         api_secret: Optional[str] = None,
         session: Optional[ClientSession] = None,
         timeout: Optional[ClientTimeout] = None,
     ):
         """Instantiate a new Api object."""
-        self._host = host.strip("/")
+        self.server_url = server_url.strip("/")
         self._api_kwargs = {"headers": self.request_headers(api_secret)}
         if timeout:
             self._api_kwargs["timeout"] = timeout
@@ -92,7 +92,7 @@ class Api(object):
     async def __get(self, path):
         async def get(session: ClientSession):
             async with session.get(
-                f"{self._host}{path}", **self._api_kwargs
+                f"{self.server_url}{path}", **self._api_kwargs
             ) as response:
                 response.raise_for_status()
                 return await response.json()
