@@ -99,3 +99,4 @@ async def test_server_status(api: nightscout.Api):
         assert "ok" == server_status.status
         assert "nightscout" == server_status.name
         assert server_status.apiEnabled
+        assert "readable" == server_status.settings["authDefaultRoles"]

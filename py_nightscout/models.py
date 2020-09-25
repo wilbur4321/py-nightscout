@@ -44,6 +44,7 @@ class ServerStatus(BaseModel):
             "version": None,
             "name": None,
             "apiEnabled": None,
+            "settings": None,
         }
 
         for (param, default) in self.param_defaults.items():
