@@ -38,7 +38,10 @@ class Api(object):
     def request_headers(self, api_secret: Optional[str] = None):
         headers = {"Content-Type": "application/json", "Accept": "application/json"}
         if api_secret:
-            headers["api-secret"] = hashlib.sha1(api_secret.encode("utf-8")).hexdigest()
+            if api_secret.startswith("token="):
+                headers["api-secret"] = api_secret
+            else:
+                headers["api-secret"] = hashlib.sha1(api_secret.encode("utf-8")).hexdigest()
         return headers
 
     async def get_sgvs(self, params={}) -> [SGV]:
