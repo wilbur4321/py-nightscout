@@ -9,18 +9,32 @@ Based on [ps2/python-nightscout](https://github.com/ps2/python-nightscout)
 
 ```python
 import asyncio
+import datetime
 
-from aiohttp import ClientResponseError, ClientConnectorError
+from aiohttp import ClientError, ClientConnectorError, ClientResponseError
 
 import py_nightscout as nightscout
 
+import pytz
+
+NIGHTSCOUT_URL = 'https://yournightscoutsite.herokuapp.com'
+API_SECRET = ''
+
 async def main():
     """Example of library usage."""
+    try:
+        if api_secret:
+                # To use authentication, use yout api secret:
+                api = nightscout.Api(NIGHTSCOUT_API, api_secret=API_SECRET)
+        else:
+            # You can use the api without authentication:
+            api = nightscout.Api(NIGHTSCOUT_URL)
+        status = await api.get_server_status()
+    except ClientResponseError as error:
+        raise RuntimeError("Received ClientResponseError") from error
+    except (ClientError, ClientConnectorError, TimeoutError, OSError) as error:
+        raise RuntimeError("Received client error or timeout") from error
 
-    # You can use the api without authentication:
-    api = nightscout.Api('https://yournightscoutsite.herokuapp.com')
-    # To use authentication, use yout api secret:
-    api = nightscout.Api('https://yournightscoutsite.herokuapp.com', api_secret='your api secret')
 
     #### Glucose Values (SGVs) ####
     # Get last 10 entries:
@@ -37,18 +51,20 @@ async def main():
     print([treatment.eventType for treatment in treatments])
 
     ### Profiles
-    profile_definition_set = api.get_profiles()
-    profile_definition = profile_definition_set.get_profile_definition_active_at(datetime.now())
+    profile_definition_set = await api.get_profiles()
+    profile_definition = profile_definition_set.get_profile_definition_active_at(datetime.datetime.now(tz=pytz.UTC))
     profile = profile_definition.get_default_profile()
 
-    print "Duration of insulin action = %d" % profile.dia
+    print("Duration of insulin action = %d" % profile.dia)
 
-    five_thirty_pm = datetime(2017, 3, 24, 17, 30)
+    five_thirty_pm = datetime.datetime(2017, 3, 24, 17, 30)
     five_thirty_pm = profile.timezone.localize(five_thirty_pm)
-    print "Scheduled basal rate at 5:30pm is = %f" % profile.basal.value_at_date(five_thirty_pm)
+    print("Scheduled basal rate at 5:30pm is = %f" % profile.basal.value_at_date(five_thirty_pm))
 
     ### Server Status
 
-    server_status = api.get_status()
+    server_status = await api.get_server_status()
     print(server_status.status)
+    
+asyncio.run(main())
 ```
