@@ -1,18 +1,17 @@
 // For format details, see https://aka.ms/vscode-remote/devcontainer.json or this file's README at:
 // https://github.com/microsoft/vscode-dev-containers/tree/v0.128.0/containers/python-3
 {
-	"name": "Python 3",
+	"name": "Python 3.9",
 	"build": {
 		"dockerfile": "Dockerfile",
 		"context": "..",
 		// Update 'VARIANT' to pick a Python version. Rebuild the container 
 		// if it already exists to update. Available variants: 3, 3.6, 3.7, 3.8 
-		"args": { "VARIANT": "3" }
+		"args": { "VARIANT": "3.9" }
 	},
 
 	// Set *default* container specific settings.json values on container create.
 	"settings": { 
-		"terminal.integrated.shell.linux": "/bin/bash",
 		"python.pythonPath": "/usr/local/bin/python",
 		"python.linting.enabled": true,
 		"python.linting.pylintEnabled": true,
@@ -24,7 +23,13 @@
 		"python.linting.mypyPath": "/usr/local/py-utils/bin/mypy",
 		"python.linting.pycodestylePath": "/usr/local/py-utils/bin/pycodestyle",
 		"python.linting.pydocstylePath": "/usr/local/py-utils/bin/pydocstyle",
-		"python.linting.pylintPath": "/usr/local/py-utils/bin/pylint"
+		"python.linting.pylintPath": "/usr/local/py-utils/bin/pylint",
+		"terminal.integrated.profiles.linux": {
+		  "zsh": {
+			"path": "/usr/bin/zsh"
+		  }
+		},
+		"terminal.integrated.defaultProfile.linux": "zsh"
 	},
 
 	// Add the IDs of extensions you want installed when the container is created.
@@ -33,13 +38,13 @@
 		"davidanson.vscode-markdownlint",
 		"yzhang.markdown-all-in-one",
 		"spmeesseman.vscode-taskexplorer"
-	]
+	],
 
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	// "forwardPorts": [],
 
 	// Use 'postCreateCommand' to run commands after the container is created.
-	// "postCreateCommand": "pip3 install --user -r requirements.txt",
+	"postCreateCommand": "pip install -r requirements.txt -U && pip install -r requirements_test.txt -U && pip install ."
 
 	// Uncomment to connect as a non-root user. See https://aka.ms/vscode-remote/containers/non-root.
 	// "remoteUser": "vscode"
