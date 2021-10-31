@@ -3,7 +3,7 @@ import hashlib
 from typing import Any, Callable, Optional
 
 from aiohttp import ClientSession, ClientTimeout
-from .models import SGV, ProfileDefinitionSet, ServerStatus, Treatment
+from .models import SGV, ProfileDefinitionSet, ServerStatus, Treatment, DeviceStatus
 
 
 class Api(object):
@@ -91,6 +91,38 @@ class Api(object):
         """
         json = await self.__get("/api/v1/profile.json")
         return ProfileDefinitionSet.new_from_json_array(json)
+
+    async def get_devices_status(self, params={}) -> [DeviceStatus]:
+        """Fetch devices status
+        Args:
+          params:
+            Mongodb style query params. For example, you can do things like:
+                get_profiles({'count':0, 'find[startDate][$gte]': '2017-03-07T01:10:26.000Z'})
+        Returns:
+          ProfileDefinitionSet
+        """
+        json = await self.__get("/api/v1/devicestatus.json")
+        return [DeviceStatus.new_from_json_dict(x) for x in json]
+
+    async def get_latest_devices_status(self, params={}) -> [DeviceStatus]:
+        """Fetch devices status
+        Args:
+          params:
+            Mongodb style query params. For example, you can do things like:
+                get_profiles({'count':0, 'find[startDate][$gte]': '2017-03-07T01:10:26.000Z'})
+        Returns:
+          ProfileDefinitionSet
+        """
+        results = await self.get_devices_status(params)
+        grouped = dict()
+        for entry in results:
+            grouped.setdefault(entry.device, []).append(entry)
+        output = dict()
+        for device_name in grouped:
+            entries = grouped[device_name]
+            entries.sort(key=lambda x: x.created_at, reverse=True)
+            output[device_name] = entries[0]
+        return output
 
     async def __get(self, path):
         async def get(session: ClientSession):

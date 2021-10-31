@@ -385,3 +385,222 @@ class ProfileDefinitionSet(object):
     def new_from_json_array(cls, data):
         defs = [ProfileDefinition.new_from_json_dict(d) for d in data]
         return cls(defs)
+
+
+class DeviceStatus(BaseModel):
+    """DeviceStatus
+
+    Represents a Device on Nightscout. For example a MiaoMiao reader.
+
+    Attributes:
+        device (string): Device type and hostname for example openaps://hostname.
+        created_at (datetime): Created date.
+        openaps (string): OpenAPS devicestatus record.
+        loop (string): Loop devicestatus record.
+        pump (PumpDevice): Pump device.
+        uploader (UploaderBattery): Uploader device's battery.
+        xdripjs (XDripJs): xDripJS device.
+    """
+
+    def __init__(self, **kwargs):
+        self.param_defaults = {
+            "device": None,
+            "created_at": None,
+            "openaps": None,
+            "loop": None,
+            "pump": None,
+            "uploader": None,
+            "xdripjs": None,
+        }
+
+        for (param, default) in self.param_defaults.items():
+            setattr(self, param, kwargs.get(param, default))
+
+    @classmethod
+    def json_transforms(cls, json_data):
+        if json_data.get("created_at"):
+            json_data["created_at"] = dateutil.parser.parse(json_data["created_at"])
+        if json_data.get("pump"):
+            json_data["pump"] = PumpDevice.new_from_json_dict(json_data["pump"])
+        if json_data.get("uploader"):
+            json_data["uploader"] = UploaderBattery.new_from_json_dict(
+                json_data["uploader"]
+            )
+        if json_data.get("xdripjs"):
+            json_data["xdripjs"] = XDripJs.new_from_json_dict(json_data["xdripjs"])
+
+
+class XDripJs(BaseModel):
+    """XDripJs
+
+    Represents a xDrip-js source.
+
+    Attributes:
+        state (int): CGM Sensor Session State Code
+        stateString (string): CGM Sensor Session State String
+        stateStringShort (string): CGM Sensor Session State Short String
+        txId (string): CGM Transmitter ID
+        txStatus (float): CGM Transmitter Status
+        txStatusString (string): CGM Transmitter Status String
+        txStatusStringShort (string): CGM Transmitter Status Short String
+        txActivation (int): CGM Transmitter Activation Milliseconds After Epoch
+        mode (string): Mode xdrip-js Application Operationg: expired, not expired, etc.
+        timestamp (int): Last Update Milliseconds After Epoch
+        rssi (int): Receive Signal Strength of Transmitter
+        unfiltered (int): Most Recent Raw Unfiltered Glucose
+        filtered (int): Most Recent Raw Filtered Glucose
+        noise (int): Calculated Noise Value - 1=Clean, 2=Light, 3=Medium, 4=Heavy
+        noiseString (float): Noise Value String
+        slope (float): Calibration Slope Value
+        intercept (int): Calibration Intercept Value
+        calType (string): Algorithm Used to Calculate Calibration Values
+        lastCalibrationDate (int): Most Recent Calibration Milliseconds After Epoch
+        sessionStart (int): Sensor Session Start Milliseconds After Epoch
+        batteryTimestamp (int): Most Recent Batter Status Read Milliseconds After Epoch
+        voltagea (float): Voltage of Battery A
+        voltageb (float): Voltage of Battery B
+        temperature (float): Transmitter Temperature
+        resistance (float): Sensor Resistance
+    """
+
+    def __init__(self, **kwargs):
+        self.param_defaults = {
+            "state": None,
+            "stateString": None,
+            "stateStringShort": None,
+            "txId": None,
+            "txStatus": None,
+            "txStatusString": None,
+            "txStatusStringShort": None,
+            "txActivation": None,
+            "mode": None,
+            "timestamp": None,
+            "rssi": None,
+            "unfiltered": None,
+            "filtered": None,
+            "noise": None,
+            "noiseString": None,
+            "slope": None,
+            "intercept": None,
+            "calType": None,
+            "lastCalibrationDate": None,
+            "sessionStart": None,
+            "batteryTimestamp": None,
+            "voltagea": None,
+            "voltageb": None,
+            "temperature": None,
+            "resistance": None,
+        }
+
+        for (param, default) in self.param_defaults.items():
+            setattr(self, param, kwargs.get(param, default))
+
+
+class UploaderBattery(BaseModel):
+    """UploaderBattery
+
+    Represents a Uploader device's battery on Nightscout.
+
+    Attributes:
+        batteryVoltage (float): Battery Voltage.
+        battery (int): Battery percentage.
+    """
+
+    def __init__(self, **kwargs):
+        self.param_defaults = {
+            "batteryVoltage": None,
+            "battery": None,
+        }
+
+        for (param, default) in self.param_defaults.items():
+            setattr(self, param, kwargs.get(param, default))
+
+
+class PumpDevice(BaseModel):
+    """PumpDevice
+
+    Represents a Pump device on Nightscout.
+
+    Attributes:
+        clock (datetime): Clock datetime.
+        battery (PumpBattery): Pump battery details.
+        reservoir (float): Amount of insulin remaining in pump reservoir.
+        status (PumpStatus): Pump status details.
+    """
+
+    def __init__(self, **kwargs):
+        self.param_defaults = {
+            "clock": None,
+            "battery": None,
+            "reservoir": None,
+            "status": None,
+        }
+
+        for (param, default) in self.param_defaults.items():
+            setattr(self, param, kwargs.get(param, default))
+
+    @classmethod
+    def json_transforms(cls, json_data):
+        if json_data.get("clock"):
+            json_data["clock"] = dateutil.parser.parse(json_data["clock"])
+        if json_data.get("battery"):
+            json_data["battery"] = PumpBattery.new_from_json_dict(json_data["battery"])
+        if json_data.get("status"):
+            json_data["status"] = PumpStatus.new_from_json_dict(json_data["status"])
+
+
+class PumpBattery(BaseModel):
+    """PumpBattery
+
+    Represents the Pump's battery on Nightscout.
+
+    Attributes:
+        status (string): Pump Battery Status String. For example "normal".
+        voltage (float): Pump Battery Voltage Level.
+    """
+
+    def __init__(self, **kwargs):
+        self.param_defaults = {
+            "clock": None,
+            "battery": None,
+            "reservoir": None,
+            "status": None,
+        }
+
+        for (param, default) in self.param_defaults.items():
+            setattr(self, param, kwargs.get(param, default))
+
+
+class PumpStatus(BaseModel):
+    """PumpStatus
+
+    Represents a Pump device status on Nightscout.
+
+    Attributes:
+        status (string): Pump Status String.
+        bolusing (boolean): Is Pump Bolusing.
+        suspended (boolean): Is Pump Suspended.
+        timestamp (datetime): Date time of entry.
+    """
+
+    def __init__(self, **kwargs):
+        self.param_defaults = {
+            "clock": None,
+            "battery": None,
+            "reservoir": None,
+            "status": None,
+        }
+
+        for (param, default) in self.param_defaults.items():
+            setattr(self, param, kwargs.get(param, default))
+
+    @classmethod
+    def json_transforms(cls, json_data):
+        timestamp = json_data.get("timestamp")
+        if timestamp:
+            if type(timestamp) == int:
+                json_data["timestamp"] = datetime.fromtimestamp(
+                    timestamp / 1000.0, pytz.utc
+                )
+            else:
+                json_data["timestamp"] = dateutil.parser.parse(timestamp)
