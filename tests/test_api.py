@@ -3,6 +3,7 @@ import py_nightscout as nightscout
 import json
 from datetime import datetime
 from dateutil.tz import tzutc
+import dateutil.parser
 from aioresponses import aioresponses
 import pytz
 
@@ -25,6 +26,9 @@ profile_response = json.loads(
 server_status_response = json.loads(
     '{"status":"ok","name":"nightscout","version":"13.0.1","serverTime":"2020-08-05T18:14:02.032Z","serverTimeEpoch":1596651242032,"apiEnabled":true,"careportalEnabled":true,"boluscalcEnabled":true,"settings":{"units":"mg/dl","timeFormat":12,"nightMode":false,"editMode":true,"showRawbg":"never","customTitle":"Nightscout","theme":"default","alarmUrgentHigh":true,"alarmUrgentHighMins":[30,60,90,120],"alarmHigh":true,"alarmHighMins":[30,60,90,120],"alarmLow":true,"alarmLowMins":[15,30,45,60],"alarmUrgentLow":true,"alarmUrgentLowMins":[15,30,45],"alarmUrgentMins":[30,60,90,120],"alarmWarnMins":[30,60,90,120],"alarmTimeagoWarn":true,"alarmTimeagoWarnMins":15,"alarmTimeagoUrgent":true,"alarmTimeagoUrgentMins":30,"alarmPumpBatteryLow":false,"language":"en","scaleY":"log","showPlugins":" delta direction upbat","showForecast":"ar2","focusHours":3,"heartbeat":60,"baseURL":"","authDefaultRoles":"readable","thresholds":{"bgHigh":260,"bgTargetTop":180,"bgTargetBottom":80,"bgLow":55},"insecureUseHttp":false,"secureHstsHeader":true,"secureHstsHeaderIncludeSubdomains":false,"secureHstsHeaderPreload":false,"secureCsp":false,"deNormalizeDates":false,"showClockDelta":false,"showClockLastTime":false,"DEFAULT_FEATURES":["bgnow","delta","direction","timeago","devicestatus","upbat","errorcodes","profile"],"alarmTypes":["predict"],"enable":["careportal","boluscalc","food","bwp","cage","sage","iage","iob","cob","basal","ar2","rawbg","pushover","bgi","pump","openaps","treatmentnotify","bgnow","delta","direction","timeago","devicestatus","upbat","errorcodes","profile","ar2"]},"extendedSettings":{"devicestatus":{"advanced":true}},"authorized":null}'
 )
+device_status_response = json.loads(
+    '[{"_id":"617dc8ef0c76ce0182e37978","device":"Tomato","uploader":{"battery":20},"created_at":"2021-10-30T22:36:31.901Z","utcOffset":-180,"mills":1635633391901},{"_id":"617dc8ef0c76ce0182e37977","device":"samsung SM-N986B","uploader":{"battery":69},"created_at":"2021-10-30T22:36:31.844Z","utcOffset":-180,"mills":1635633391844},{"_id":"617dc7c40c76ce0182e37976","device":"Tomato","uploader":{"battery":20},"created_at":"2021-10-30T22:31:32.252Z","utcOffset":-180,"mills":1635633092252},{"_id":"617dc7c40c76ce0182e37975","device":"samsung SM-N986B","uploader":{"battery":70},"created_at":"2021-10-30T22:31:32.198Z","utcOffset":-180,"mills":1635633092198},{"_id":"617dc6980c76ce0182e37974","device":"Tomato","uploader":{"battery":20},"created_at":"2021-10-30T22:26:32.128Z","utcOffset":-180,"mills":1635632792128},{"_id":"617dc6980c76ce0182e37973","device":"samsung SM-N986B","uploader":{"battery":70},"created_at":"2021-10-30T22:26:32.043Z","utcOffset":-180,"mills":1635632792043},{"_id":"617dc56c0c76ce0182e37972","device":"Tomato","uploader":{"battery":20},"created_at":"2021-10-30T22:21:32.955Z","utcOffset":-180,"mills":1635632492955},{"_id":"617dc56c0c76ce0182e37971","device":"samsung SM-N986B","uploader":{"battery":70},"created_at":"2021-10-30T22:21:32.902Z","utcOffset":-180,"mills":1635632492902},{"_id":"617dc43f0c76ce0182e37970","device":"Tomato","uploader":{"battery":20},"created_at":"2021-10-30T22:16:31.839Z","utcOffset":-180,"mills":1635632191839},{"_id":"617dc43f0c76ce0182e3796f","device":"samsung SM-N986B","uploader":{"battery":70},"created_at":"2021-10-30T22:16:31.784Z","utcOffset":-180,"mills":1635632191784}]'
+)
 
 
 @pytest.mark.asyncio
@@ -32,7 +36,8 @@ async def test_get_sgv(api: nightscout.Api):
     """Tests using external session."""
     with aioresponses() as response:
         response.get(
-            "http://testns.example.com/api/v1/entries/sgv.json", payload=sgv_response,
+            "http://testns.example.com/api/v1/entries/sgv.json",
+            payload=sgv_response,
         )
         entries = await api.get_sgvs()
         assert 10 == len(entries)
@@ -64,7 +69,8 @@ async def test_get_treatments(api: nightscout.Api):
 async def test_get_profile(api: nightscout.Api):
     with aioresponses() as response:
         response.get(
-            "http://testns.example.com/api/v1/profile.json", payload=profile_response,
+            "http://testns.example.com/api/v1/profile.json",
+            payload=profile_response,
         )
 
         profile_definition_set = await api.get_profiles()
@@ -100,3 +106,43 @@ async def test_server_status(api: nightscout.Api):
         assert "nightscout" == server_status.name
         assert server_status.apiEnabled
         assert "readable" == server_status.settings["authDefaultRoles"]
+
+
+@pytest.mark.asyncio
+async def test_devices_status(api: nightscout.Api):
+    with aioresponses() as response:
+        response.get(
+            "http://testns.example.com/api/v1/devicestatus.json",
+            payload=device_status_response,
+        )
+
+        devices_status = await api.get_devices_status()
+
+        assert 10 == len(devices_status)
+        assert "Tomato" == devices_status[0].device
+        assert 20 == devices_status[0].uploader.battery
+
+
+@pytest.mark.asyncio
+async def test_latest_devices_status(api: nightscout.Api):
+    with aioresponses() as response:
+        response.get(
+            "http://testns.example.com/api/v1/devicestatus.json",
+            payload=device_status_response,
+        )
+
+        devices_status = await api.get_latest_devices_status()
+
+        assert 2 == len(devices_status)
+        assert devices_status["Tomato"]
+        assert devices_status["samsung SM-N986B"]
+        assert (
+            dateutil.parser.parse("2021-10-30T22:36:31.901Z")
+            == devices_status["Tomato"].created_at
+        )
+        assert 20 == devices_status["Tomato"].uploader.battery
+        assert (
+            dateutil.parser.parse("2021-10-30T22:36:31.844Z")
+            == devices_status["samsung SM-N986B"].created_at
+        )
+        assert 69 == devices_status["samsung SM-N986B"].uploader.battery
