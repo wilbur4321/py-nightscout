@@ -58,6 +58,7 @@ class SGV(BaseModel):
 
     Attributes:
         sgv (int): Glucose measurement value in mg/dl.
+        sgv_mmol (int): Glucose measurement value in mmol/L.
         delta (float): Delta between current and previous value.
         date (datetime): The time of the measurement
         direction (string): One of ['DoubleUp', 'SingleUp', 'FortyFiveUp', 'Flat', 'FortyFiveDown', 'SingleDown', 'DoubleDown']
@@ -67,6 +68,7 @@ class SGV(BaseModel):
     def __init__(self, **kwargs):
         self.param_defaults = {
             "sgv": None,
+            "sgv_mmol": None,
             "delta": None,
             "date": None,
             "direction": None,
@@ -75,11 +77,15 @@ class SGV(BaseModel):
 
         for (param, default) in self.param_defaults.items():
             setattr(self, param, kwargs.get(param, default))
+        self.sgv_mmol = self.mgdlTommolL(self.sgv)
 
     @classmethod
     def json_transforms(cls, json_data):
         if json_data.get("dateString"):
             json_data["date"] = dateutil.parser.parse(json_data["dateString"])
+    
+    def mgdlTommolL(self, mgdl):
+        return mgdl / 18
 
 
 class Treatment(BaseModel):

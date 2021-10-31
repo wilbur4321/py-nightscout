@@ -29,8 +29,10 @@ async def main():
     #### Glucose Values (SGVs) ####
     # Get last 10 entries:
     entries = await api.get_sgvs()
-    print("SGV values:")
+    print("SGV values in mg/dL:")
     print([entry.sgv for entry in entries])
+    print("SGV values in mmol/L:")
+    print([entry.sgv_mmol for entry in entries])
 
     # Specify time ranges:
     entries = await api.get_sgvs({'count':0, 'find[dateString][$gte]': '2017-03-07T01:10:26.000Z'})
