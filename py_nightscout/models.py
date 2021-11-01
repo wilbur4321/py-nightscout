@@ -70,6 +70,7 @@ class SGV(BaseModel):
             "sgv": None,
             "sgv_mmol": None,
             "delta": None,
+            "delta_mmol": None,
             "date": None,
             "direction": None,
             "device": None,
@@ -78,6 +79,7 @@ class SGV(BaseModel):
         for (param, default) in self.param_defaults.items():
             setattr(self, param, kwargs.get(param, default))
         self.sgv_mmol = self.mgdlTommolL(self.sgv)
+        self.delta_mmol = self.mgdlTommolL(self.delta)
 
     @classmethod
     def json_transforms(cls, json_data):
