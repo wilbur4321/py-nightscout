@@ -42,7 +42,7 @@ async def test_get_sgv(api: nightscout.Api):
         entries = await api.get_sgvs()
         assert 10 == len(entries)
         assert 169 == entries[0].sgv
-        assert 9.38888888888889 == entries[0].sgv_mmol
+        assert 9.4 == entries[0].sgv_mmol
         assert "FortyFiveDown" == entries[0].direction
         assert -5.257 == entries[0].delta
         assert datetime(2020, 8, 5, 19, 1, 6, 533000, tzinfo=tzutc()) == entries[0].date

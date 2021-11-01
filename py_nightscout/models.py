@@ -85,7 +85,7 @@ class SGV(BaseModel):
             json_data["date"] = dateutil.parser.parse(json_data["dateString"])
     
     def mgdlTommolL(self, mgdl):
-        return mgdl / 18
+        return round(mgdl / 18, 1)
 
 
 class Treatment(BaseModel):
