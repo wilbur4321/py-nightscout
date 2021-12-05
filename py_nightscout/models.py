@@ -60,7 +60,7 @@ class SGV(BaseModel):
         sgv (int): Glucose measurement value in mg/dl.
         sgv_mmol (int): Glucose measurement value in mmol/L.
         delta (float): Delta between current and previous value.
-        date (datetime): The time of the measurement
+        date (datetime): The time of the measurementpa
         direction (string): One of ['DoubleUp', 'SingleUp', 'FortyFiveUp', 'Flat', 'FortyFiveDown', 'SingleDown', 'DoubleDown']
         device (string): the source of the measurement.  For example, 'share2', if pulled from Dexcom Share servers
     """
@@ -512,12 +512,14 @@ class UploaderBattery(BaseModel):
     Attributes:
         batteryVoltage (float): Battery Voltage.
         battery (int): Battery percentage.
+        type (string): Uploader type.
     """
 
     def __init__(self, **kwargs):
         self.param_defaults = {
             "batteryVoltage": None,
             "battery": None,
+            "type": None,
         }
 
         for (param, default) in self.param_defaults.items():
