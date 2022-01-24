@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from typing import Optional
 
 import dateutil.parser
 import pytz
@@ -86,8 +87,8 @@ class SGV(BaseModel):
         if json_data.get("dateString"):
             json_data["date"] = dateutil.parser.parse(json_data["dateString"])
     
-    def mgdlTommolL(self, mgdl):
-        return round(mgdl / 18, 1)
+    def mgdlTommolL(self, mgdl: Optional[float]) -> Optional[float]:
+        return None if mgdl is None else round(mgdl / 18, 1)
 
 
 class Treatment(BaseModel):
