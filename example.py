@@ -9,17 +9,13 @@ import py_nightscout as nightscout
 import pytz
 
 NIGHTSCOUT_URL = 'https://your_nightscout_site.herokuapp.com'
+ACCESS_TOKEN = ''
 API_SECRET = ''
 
 async def main():
     """Example of library usage."""
     try:
-        if API_SECRET:
-                # To use authentication, use yout api secret:
-                api = nightscout.Api(NIGHTSCOUT_URL, api_secret=API_SECRET)
-        else:
-            # You can use the api without authentication:
-            api = nightscout.Api(NIGHTSCOUT_URL)
+        api = nightscout.Api(NIGHTSCOUT_URL, access_token=ACCESS_TOKEN, api_secret=API_SECRET)
         status = await api.get_server_status()
     except ClientResponseError as error:
         raise RuntimeError("Received ClientResponseError") from error

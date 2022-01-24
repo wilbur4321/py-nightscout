@@ -24,20 +24,24 @@ class Api(object):
     def __init__(
         self,
         server_url: str,
+        *,
+        access_token: Optional[str] = None,
         api_secret: Optional[str] = None,
         session: Optional[ClientSession] = None,
         timeout: Optional[ClientTimeout] = None,
     ):
         """Instantiate a new Api object."""
         self.server_url = server_url.strip("/")
-        self._api_kwargs = {"headers": self.request_headers(api_secret)}
+        self._api_kwargs = {"headers": self.request_headers(access_token, api_secret)}
         if timeout:
             self._api_kwargs["timeout"] = timeout
         self._session = session
 
-    def request_headers(self, api_secret: Optional[str] = None):
+    def request_headers(self, access_token: Optional[str] = None, api_secret: Optional[str] = None):
         headers = {"Content-Type": "application/json", "Accept": "application/json"}
-        if api_secret:
+        if access_token:
+            headers["api-secret"] = "token=" + access_token
+        elif api_secret:
             if api_secret.startswith("token="):
                 headers["api-secret"] = api_secret
             else:
