@@ -1,7 +1,7 @@
-python-dateutil
+black
 coverage
-pytz
 flake8
+flake8-black
 pytest
 pytest-asyncio
 pytest-cov

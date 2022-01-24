@@ -20,9 +20,9 @@ RUN apt-get update \
 USER vscode
 ENV PATH="/home/vscode/.local/bin:${PATH}"
 COPY requirements.txt /tmp/pip-tmp/
-COPY requirements_test.txt /tmp/pip-tmp/
+COPY requirements_dev.txt /tmp/pip-tmp/
 RUN pip3 --disable-pip-version-check --no-cache-dir install -r /tmp/pip-tmp/requirements.txt \
-   && pip3 --disable-pip-version-check --no-cache-dir install -r /tmp/pip-tmp/requirements_test.txt
+   && pip3 --disable-pip-version-check --no-cache-dir install -r /tmp/pip-tmp/requirements_dev.txt
 
 #   && rm -rf /tmp/pip-tmp
 

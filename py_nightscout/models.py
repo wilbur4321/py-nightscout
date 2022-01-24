@@ -62,8 +62,10 @@ class SGV(BaseModel):
         sgv_mmol (int): Glucose measurement value in mmol/L.
         delta (float): Delta between current and previous value.
         date (datetime): The time of the measurementpa
-        direction (string): One of ['DoubleUp', 'SingleUp', 'FortyFiveUp', 'Flat', 'FortyFiveDown', 'SingleDown', 'DoubleDown']
-        device (string): the source of the measurement.  For example, 'share2', if pulled from Dexcom Share servers
+        direction (string): One of ['DoubleUp', 'SingleUp', 'FortyFiveUp', 'Flat',
+            'FortyFiveDown', 'SingleDown', 'DoubleDown']
+        device (string): the source of the measurement.  For example, 'share2',
+            if pulled from Dexcom Share servers
     """
 
     def __init__(self, **kwargs):
@@ -86,7 +88,7 @@ class SGV(BaseModel):
     def json_transforms(cls, json_data):
         if json_data.get("dateString"):
             json_data["date"] = dateutil.parser.parse(json_data["dateString"])
-    
+
     def mgdlTommolL(self, mgdl: Optional[float]) -> Optional[float]:
         return None if mgdl is None else round(mgdl / 18, 1)
 
@@ -94,19 +96,22 @@ class SGV(BaseModel):
 class Treatment(BaseModel):
     """Nightscout Treatment
 
-    Represents an entry in the Nightscout treatments store, such as boluses, carb entries,
-    temp basals, etc. Many of the following attributes will be set to None, depending on
-    the type of entry.
+    Represents an entry in the Nightscout treatments store, such as boluses, carb
+    entries, temp basals, etc. Many of the following attributes will be set to None,
+    depending on the type of entry.
 
     Attributes:
-        eventType (string): The event type. Examples: ['Temp Basal', 'Correction Bolus', 'Meal Bolus', 'BG Check']
+        eventType (string): The event type.
+            Examples: ['Temp Basal', 'Correction Bolus', 'Meal Bolus', 'BG Check']
         timestamp (datetime): The time of the treatment
         insulin (float): The amount of insulin delivered
-        programmed (float): The amount of insulin programmed. May differ from insulin if the pump was suspended before delivery was finished.
+        programmed (float): The amount of insulin programmed. May differ from insulin
+            if the pump was suspended before delivery was finished.
         carbs (int): Amount of carbohydrates in grams consumed
         rate (float): Rate of insulin delivery for a temp basal, in U/hr.
         duration (int): Duration in minutes for a temp basal.
-        enteredBy (string): The person who gave the treatment if entered in Care Portal, or the device that fetched the treatment from the pump.
+        enteredBy (string): The person who gave the treatment if entered in Care Portal,
+            or the device that fetched the treatment from the pump.
         glucose (int): Glucose value for a BG check, in mg/dl.
     """
 

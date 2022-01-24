@@ -7,25 +7,27 @@
 		"context": "..",
 		// Update 'VARIANT' to pick a Python version. Rebuild the container 
 		// if it already exists to update. Available variants: 3, 3.6, 3.7, 3.8, 3.9, 3.10
-		"args": { "VARIANT": "3.10" }
+		"args": {
+			"VARIANT": "3.10"
+		}
 	},
-
 	// Set *default* container specific settings.json values on container create.
-	"settings": { 
-		"python.pythonPath": "/usr/local/bin/python",
+	"settings": {
+		"editor.rulers": [
+			88
+		],
 		"python.analysis.diagnosticMode": "workspace",
 		"python.analysis.typeCheckingMode": "off",
-		"python.formatting.autopep8Path": "/usr/local/py-utils/bin/autopep8",
-		"python.formatting.blackPath": "/usr/local/py-utils/bin/black",
-		"python.formatting.yapfPath": "/usr/local/py-utils/bin/yapf",
+		"python.formatting.provider": "black",
+		"python.formatting.blackArgs": [
+			"--line-length",
+			"88"
+		],
+		"editor.formatOnSave": true,
+		"editor.formatOnSaveMode": "file",
 		"python.linting.enabled": true,
 		"python.linting.pylintEnabled": false,
-		"python.linting.banditPath": "/usr/local/py-utils/bin/bandit",
-		"python.linting.flake8Path": "/usr/local/py-utils/bin/flake8",
-		"python.linting.mypyPath": "/usr/local/py-utils/bin/mypy",
-		"python.linting.pycodestylePath": "/usr/local/py-utils/bin/pycodestyle",
-		"python.linting.pydocstylePath": "/usr/local/py-utils/bin/pydocstyle",
-		"python.linting.pylintPath": "/usr/local/py-utils/bin/pylint",
+		"python.linting.flake8Enabled": true,
 		"python.testing.pytestArgs": [],
 		"python.testing.pytestEnabled": true,
 		"testing.automaticallyOpenPeekViewDuringAutoRun": true,
@@ -43,7 +45,6 @@
 			"**/*.pyc": true,
 		},
 	},
-
 	// Add the IDs of extensions you want installed when the container is created.
 	"extensions": [
 		"ms-python.python",
@@ -56,13 +57,10 @@
 		"mhutchie.git-graph",
 		"eamodio.gitlens",
 	],
-
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	// "forwardPorts": [],
-
 	// Use 'postCreateCommand' to run commands after the container is created.
 	"postCreateCommand": "pip install .",
-
 	// Uncomment to connect as a non-root user. See https://aka.ms/vscode-remote/containers/non-root.
 	"remoteUser": "vscode",
 }
