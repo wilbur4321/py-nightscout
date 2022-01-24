@@ -1,22 +1,28 @@
 import asyncio
 import datetime
 import platform
+import pytz
+import argparse
 
 from aiohttp import ClientError, ClientConnectorError, ClientResponseError
 
 import py_nightscout as nightscout
 
-import pytz
-
-NIGHTSCOUT_URL = 'https://your_nightscout_site.herokuapp.com'
-ACCESS_TOKEN = ''
-API_SECRET = ''
-
 async def main():
     """Example of library usage."""
+    parser = argparse.ArgumentParser(description="Example of py-nightscout library")
+    parser.add_argument("url", help="Nightscout URL")
+    group = parser.add_mutually_exclusive_group(required=False)
+    group.add_argument("-s", "--api-secret", help="API secret (deprecated)", required=False)
+    group.add_argument("-t", "--access-token", help="Access token", required=False)
+    args = parser.parse_args()
+
     try:
-        api = nightscout.Api(NIGHTSCOUT_URL, access_token=ACCESS_TOKEN, api_secret=API_SECRET)
-        status = await api.get_server_status()
+        api = nightscout.Api(
+            args.url,
+            access_token=args.access_token,
+            api_secret=args.api_secret,
+        )
     except ClientResponseError as error:
         raise RuntimeError("Received ClientResponseError") from error
     except (ClientError, ClientConnectorError, TimeoutError, OSError) as error:

@@ -8,4 +8,4 @@ Based on [ps2/python-nightscout](https://github.com/ps2/python-nightscout)
 ## Example Usage
 
 Checkout the [example.py](example.py) file in the repository.
-You can add your Nightscout URL and `ACCESS_TOKEN` or `API_TOKEN` and run this script to start using the library.
+You can set up your Nightscout URL and token via the CLI.
