@@ -1,5 +1,6 @@
 import asyncio
 import datetime
+import platform
 
 from aiohttp import ClientError, ClientConnectorError, ClientResponseError
 
@@ -68,4 +69,7 @@ async def main():
     for device_key in devices_status:
          print("\t%s battery: %d%%" % (device_key, devices_status[device_key].uploader.battery))
     
+if platform.system()=='Windows':
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+
 asyncio.run(main())
