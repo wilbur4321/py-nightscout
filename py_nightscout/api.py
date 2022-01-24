@@ -1,10 +1,12 @@
 """A library that provides a Python interface to Nightscout"""
 import hashlib
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 from aiohttp import ClientSession, ClientTimeout
 from .models import SGV, ProfileDefinitionSet, ServerStatus, Treatment, DeviceStatus
 
+
+ParamsDict = Optional[Dict[str,Any]]
 
 class Api(object):
     """A python interface into Nightscout
@@ -48,7 +50,7 @@ class Api(object):
                 headers["api-secret"] = hashlib.sha1(api_secret.encode("utf-8")).hexdigest()
         return headers
 
-    async def get_sgvs(self, params={}) -> [SGV]:
+    async def get_sgvs(self, params: ParamsDict = None) -> List[SGV]:
         """Fetch sensor glucose values
         Args:
           params:
@@ -57,20 +59,20 @@ class Api(object):
         Returns:
           A list of SGV objects
         """
-        json = await self.__get("/api/v1/entries/sgv.json")
+        json = await self.__get("/api/v1/entries/sgv.json", params)
 
         return [SGV.new_from_json_dict(x) for x in json]
 
-    async def get_server_status(self, params={}) -> ServerStatus:
+    async def get_server_status(self, params: ParamsDict = None) -> ServerStatus:
         """Fetch server status
         Returns:
           The current server status
         """
-        json = await self.__get("/api/v1/status.json")
+        json = await self.__get("/api/v1/status.json", params)
 
         return ServerStatus.new_from_json_dict(json)
 
-    async def get_treatments(self, params={}) -> [Treatment]:
+    async def get_treatments(self, params: ParamsDict = None) -> List[Treatment]:
         """Fetch treatments
         Args:
           params:
@@ -80,11 +82,11 @@ class Api(object):
           A list of Treatments
         """
 
-        json = await self.__get("/api/v1/treatments.json")
+        json = await self.__get("/api/v1/treatments.json", params)
 
         return [Treatment.new_from_json_dict(x) for x in json]
 
-    async def get_profiles(self, params={}) -> [ProfileDefinitionSet]:
+    async def get_profiles(self, params: ParamsDict = None) -> List[ProfileDefinitionSet]:
         """Fetch profiles
         Args:
           params:
@@ -93,10 +95,10 @@ class Api(object):
         Returns:
           ProfileDefinitionSet
         """
-        json = await self.__get("/api/v1/profile.json")
+        json = await self.__get("/api/v1/profile.json", params)
         return ProfileDefinitionSet.new_from_json_array(json)
 
-    async def get_devices_status(self, params={}) -> [DeviceStatus]:
+    async def get_devices_status(self, params: ParamsDict = None) -> List[DeviceStatus]:
         """Fetch devices status
         Args:
           params:
@@ -105,10 +107,10 @@ class Api(object):
         Returns:
           ProfileDefinitionSet
         """
-        json = await self.__get("/api/v1/devicestatus.json")
+        json = await self.__get("/api/v1/devicestatus.json", params)
         return [DeviceStatus.new_from_json_dict(x) for x in json]
 
-    async def get_latest_devices_status(self, params={}) -> [DeviceStatus]:
+    async def get_latest_devices_status(self, params: ParamsDict = None) -> List[DeviceStatus]:
         """Fetch devices status
         Args:
           params:
@@ -128,10 +130,10 @@ class Api(object):
             output[device_name] = entries[0]
         return output
 
-    async def __get(self, path):
+    async def __get(self, path, params: ParamsDict = None):
         async def get(session: ClientSession):
             async with session.get(
-                f"{self.server_url}{path}", **self._api_kwargs
+                f"{self.server_url}{path}", params=params, **self._api_kwargs
             ) as response:
                 response.raise_for_status()
                 return await response.json()

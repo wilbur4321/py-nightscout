@@ -38,7 +38,7 @@ async def main():
     print([entry.sgv_mmol for entry in entries])
 
     # Specify time ranges:
-    entries = await api.get_sgvs({'count':0, 'find[dateString][$gte]': '2017-03-07T01:10:26.000Z'})
+    entries = await api.get_sgvs({'count':0, 'find[dateString][$lte]': '2017-03-07T01:10:26.000Z'})
     print("\nSGV values on timerange:")
     print([entry.sgv for entry in entries])
 
