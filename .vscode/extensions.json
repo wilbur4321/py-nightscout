@@ -1,3 +1,16 @@
 {
-  "recommendations": ["esbenp.prettier-vscode", "ms-python.python"]
+  "unwantedRecommendations": [
+    "esbenp.prettier-vscode"
+  ],
+  "recommendations": [
+    "ms-python.python",
+    "visualstudioexptteam.vscodeintellicode",
+    "davidanson.vscode-markdownlint",
+    "yzhang.markdown-all-in-one",
+    "spmeesseman.vscode-taskexplorer",
+    "oderwat.indent-rainbow",
+    "tejasvi.rainbow-brackets-2",
+    "mhutchie.git-graph",
+    "eamodio.gitlens",
+  ],
 }

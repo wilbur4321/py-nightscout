@@ -1,3 +1,4 @@
+# pylint: disable=missing-module-docstring,missing-function-docstring
 from py_nightscout.models import (
     ScheduleEntry,
     AbsoluteScheduleEntry,

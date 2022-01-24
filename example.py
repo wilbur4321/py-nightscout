@@ -1,6 +1,8 @@
+# pylint: disable=missing-module-docstring
+# pyright: basic
 import asyncio
 import datetime
-import platform
+import sys
 import pytz
 import argparse
 
@@ -81,11 +83,11 @@ async def main():
 
     print("\nDevices:")
     devices_status = await api.get_latest_devices_status()
-    for device, status in devices_status:
+    for device, status in devices_status.items():
         print(f"\t{device} battery: {status.uploader.battery}%")
 
 
-if platform.system() == "Windows":
+if sys.platform == "win32":
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 asyncio.run(main())

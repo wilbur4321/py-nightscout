@@ -9,7 +9,7 @@ from .models import SGV, ProfileDefinitionSet, ServerStatus, Treatment, DeviceSt
 ParamsDict = Optional[Dict[str, Any]]
 
 
-class Api(object):
+class Api:
     """A python interface into Nightscout
 
     Example usage:
@@ -44,13 +44,13 @@ class Api(object):
     ):
         """Instantiate a new Api object."""
         self.server_url = server_url.strip("/")
-        self._api_kwargs = {"headers": self.request_headers(access_token, api_secret)}
+        self._api_kwargs = {"headers": Api.__request_headers(access_token, api_secret)}
         if timeout:
             self._api_kwargs["timeout"] = timeout
         self._session = session
 
-    def request_headers(
-        self,
+    @staticmethod
+    def __request_headers(
         access_token: Optional[str] = None,
         api_secret: Optional[str] = None,
     ):
@@ -149,22 +149,21 @@ class Api(object):
     async def get_latest_devices_status(
         self,
         params: ParamsDict = None,
-    ) -> List[DeviceStatus]:
+    ) -> Dict[str, DeviceStatus]:
         """Fetch devices status
         Args:
             params:
                 Mongodb style query params. For example, you can do things like:
                     get_profiles({"count": 0})
         Returns:
-            A list of DeviceStatus
+            A Dict of DeviceStatus
         """
         results = await self.get_devices_status(params)
-        grouped = dict()
+        grouped = {}
         for entry in results:
             grouped.setdefault(entry.device, []).append(entry)
-        output = dict()
-        for device_name in grouped:
-            entries = grouped[device_name]
+        output = {}
+        for device_name, entries in grouped.items():
             entries.sort(key=lambda x: x.created_at, reverse=True)
             output[device_name] = entries[0]
         return output

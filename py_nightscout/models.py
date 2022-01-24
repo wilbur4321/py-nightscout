@@ -1,20 +1,29 @@
+"""A library that provides a Python interface to Nightscout"""
 from datetime import datetime, timedelta
 from typing import Optional
 
 import dateutil.parser
 import pytz
 
+# pylint: disable=no-member
 
-class BaseModel(object):
+
+class BaseModel:
+    """Base class for models"""
+
     def __init__(self, **kwargs):
         self.param_defaults = {}
+        self._json = None
 
     @classmethod
     def json_transforms(cls, json_data):
-        pass
+        """Transform the given JSON into the right key/value pairs for the class"""
 
     @classmethod
     def new_from_json_dict(cls, data, **kwargs):
+        """Calls the `json_transforms` method, and then the class' `__init__` with
+        the args in the dictionary
+        """
         json_data = data.copy()
         if kwargs:
             for key, val in kwargs.items():
@@ -22,9 +31,9 @@ class BaseModel(object):
 
         cls.json_transforms(json_data)
 
-        c = cls(**json_data)
-        c._json = data
-        return c
+        i = cls(**json_data)
+        i._json = data
+        return i
 
 
 class ServerStatus(BaseModel):
@@ -40,6 +49,7 @@ class ServerStatus(BaseModel):
     """
 
     def __init__(self, **kwargs):
+        super().__init__()
         self.param_defaults = {
             "status": None,
             "version": None,
@@ -69,6 +79,7 @@ class SGV(BaseModel):
     """
 
     def __init__(self, **kwargs):
+        super().__init__()
         self.param_defaults = {
             "sgv": None,
             "sgv_mmol": None,
@@ -81,15 +92,16 @@ class SGV(BaseModel):
 
         for (param, default) in self.param_defaults.items():
             setattr(self, param, kwargs.get(param, default))
-        self.sgv_mmol = self.mgdlTommolL(self.sgv)
-        self.delta_mmol = self.mgdlTommolL(self.delta)
+        self.sgv_mmol = SGV.__mgdl_to_mmol_l(self.sgv)
+        self.delta_mmol = SGV.__mgdl_to_mmol_l(self.delta)
 
     @classmethod
     def json_transforms(cls, json_data):
         if json_data.get("dateString"):
             json_data["date"] = dateutil.parser.parse(json_data["dateString"])
 
-    def mgdlTommolL(self, mgdl: Optional[float]) -> Optional[float]:
+    @staticmethod
+    def __mgdl_to_mmol_l(mgdl: Optional[float]) -> Optional[float]:
         return None if mgdl is None else round(mgdl / 18, 1)
 
 
@@ -116,6 +128,7 @@ class Treatment(BaseModel):
     """
 
     def __init__(self, **kwargs):
+        super().__init__()
         self.param_defaults = {
             "temp": None,
             "enteredBy": None,
@@ -143,13 +156,13 @@ class Treatment(BaseModel):
             setattr(self, param, kwargs.get(param, default))
 
     def __repr__(self):
-        return "%s %s" % (self.timestamp, self.eventType)
+        return f"{self.timestamp} {self.eventType}"
 
     @classmethod
     def json_transforms(cls, json_data):
         timestamp = json_data.get("timestamp")
         if timestamp:
-            if type(timestamp) == int:
+            if isinstance(timestamp, int):
                 json_data["timestamp"] = datetime.fromtimestamp(
                     timestamp / 1000.0, pytz.utc
                 )
@@ -170,11 +183,12 @@ class ScheduleEntry(BaseModel):
     """
 
     def __init__(self, offset, value):
+        super().__init__()
         self.offset = offset
         self.value = value
 
     @classmethod
-    def new_from_json_dict(cls, data):
+    def new_from_json_dict(cls, data, **kwargs):
         seconds_offset = data.get("timeAsSeconds")
         if seconds_offset is None:
             hours, minutes = data.get("time").split(":")
@@ -184,15 +198,20 @@ class ScheduleEntry(BaseModel):
 
 
 class AbsoluteScheduleEntry(BaseModel):
+    """AbsoluteScheduleEntry
+
+    A ScheduleEntry at an absolute time"""
+
     def __init__(self, start_date, value):
+        super().__init__()
         self.start_date = start_date
         self.value = value
 
     def __repr__(self):
-        return "%s = %s" % (self.start_date, self.value)
+        return f"{self.start_date} = {self.value}"
 
 
-class Schedule(object):
+class Schedule:
     """Schedule
 
     Represents a schedule on a Nightscout profile.
@@ -200,6 +219,7 @@ class Schedule(object):
     """
 
     def __init__(self, entries, timezone):
+        super().__init__()
         self.entries = entries
         self.entries.sort(key=lambda e: e.offset)
         self.timezone = timezone
@@ -265,7 +285,10 @@ class Schedule(object):
         ]
 
     @classmethod
-    def new_from_json_array(cls, data, timezone):
+    def new_from_json_array(cls, data, timezone, **kwargs):
+        """Calls the `json_transforms` method, and then the class' `__init__` with
+        the args in the dictionary
+        """
         entries = [ScheduleEntry.new_from_json_dict(d) for d in data]
         return cls(entries, timezone)
 
@@ -286,6 +309,7 @@ class Profile(BaseModel):
     """
 
     def __init__(self, **kwargs):
+        super().__init__()
         self.param_defaults = {
             "dia": None,
             "carb_ratio": None,
@@ -341,6 +365,7 @@ class ProfileDefinition(BaseModel):
     """
 
     def __init__(self, **kwargs):
+        super().__init__()
         self.param_defaults = {
             "defaultProfile": None,
             "store": None,
@@ -353,6 +378,7 @@ class ProfileDefinition(BaseModel):
             setattr(self, param, kwargs.get(param, default))
 
     def get_default_profile(self):
+        """Returns the default ProfileDefinition"""
         return self.store[self.defaultProfile]
 
     @classmethod
@@ -370,7 +396,7 @@ class ProfileDefinition(BaseModel):
             json_data["store"] = store
 
 
-class ProfileDefinitionSet(object):
+class ProfileDefinitionSet:
     """ProfileDefinitionSet
 
     Represents a set of Nightscout profile definitions, each covering a range of time
@@ -380,6 +406,7 @@ class ProfileDefinitionSet(object):
     """
 
     def __init__(self, profile_definitions):
+        super().__init__()
         self.profile_definitions = profile_definitions
         self.profile_definitions.sort(key=lambda d: d.startDate)
 
@@ -397,6 +424,7 @@ class ProfileDefinitionSet(object):
 
     @classmethod
     def new_from_json_array(cls, data):
+        """Returns an array of ProfileDefinition from an array of json dicts"""
         defs = [ProfileDefinition.new_from_json_dict(d) for d in data]
         return cls(defs)
 
@@ -417,6 +445,7 @@ class DeviceStatus(BaseModel):
     """
 
     def __init__(self, **kwargs):
+        super().__init__()
         self.param_defaults = {
             "device": None,
             "created_at": None,
@@ -478,6 +507,7 @@ class XDripJs(BaseModel):
     """
 
     def __init__(self, **kwargs):
+        super().__init__()
         self.param_defaults = {
             "state": None,
             "stateString": None,
@@ -522,6 +552,7 @@ class UploaderBattery(BaseModel):
     """
 
     def __init__(self, **kwargs):
+        super().__init__()
         self.param_defaults = {
             "batteryVoltage": None,
             "battery": None,
@@ -545,6 +576,7 @@ class PumpDevice(BaseModel):
     """
 
     def __init__(self, **kwargs):
+        super().__init__()
         self.param_defaults = {
             "clock": None,
             "battery": None,
@@ -576,6 +608,7 @@ class PumpBattery(BaseModel):
     """
 
     def __init__(self, **kwargs):
+        super().__init__()
         self.param_defaults = {
             "clock": None,
             "battery": None,
@@ -600,6 +633,7 @@ class PumpStatus(BaseModel):
     """
 
     def __init__(self, **kwargs):
+        super().__init__()
         self.param_defaults = {
             "clock": None,
             "battery": None,
@@ -614,7 +648,7 @@ class PumpStatus(BaseModel):
     def json_transforms(cls, json_data):
         timestamp = json_data.get("timestamp")
         if timestamp:
-            if type(timestamp) == int:
+            if isinstance(timestamp, int):
                 json_data["timestamp"] = datetime.fromtimestamp(
                     timestamp / 1000.0, pytz.utc
                 )
