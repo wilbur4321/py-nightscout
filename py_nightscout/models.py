@@ -72,15 +72,15 @@ class ServerStatus(BaseModel):
         status (string): Server status
         version (string): Server version
         name (string): Server name
-        apiEnabled (boolean): If the API is enabled
+        apiEnabled (bool): If the API is enabled
         settings (Dict[str, Any]): Server settings
     """
 
-    status: Optional[str] = None
-    version: Optional[str] = None
-    name: Optional[str] = None
-    apiEnabled: Optional[bool] = None
-    settings: Optional[Dict[str, Any]] = None
+    status: str
+    version: str
+    name: str
+    apiEnabled: bool
+    settings: Dict[str, Any]
 
 
 class SGV(BaseModel):
@@ -99,13 +99,13 @@ class SGV(BaseModel):
             if pulled from Dexcom Share servers
     """
 
-    sgv: Optional[float] = None
-    sgv_mmol: Optional[float] = None
+    sgv: float
+    sgv_mmol: float
     delta: Optional[float] = None
     delta_mmol: Optional[float] = None
-    date: Optional[datetime] = None
-    direction: Optional[str] = None
-    device: Optional[str] = None
+    date: datetime
+    direction: str
+    device: str
 
     @classmethod
     def json_transforms(cls, json_data):
@@ -147,14 +147,14 @@ class Treatment(BaseModel):
     """
 
     temp: Optional[str] = None
-    enteredBy: Optional[str] = None
-    eventType: Optional[str] = None
+    enteredBy: str
+    eventType: str
     glucose: Optional[int] = None
     glucoseType: Optional[str] = None
     units: Optional[str] = None
     device: Optional[str] = None
-    created_at: Optional[datetime] = None
-    timestamp: Optional[datetime] = None
+    created_at: datetime
+    timestamp: datetime
     absolute: Optional[str] = None
     rate: Optional[str] = None
     duration: Optional[str] = None
@@ -223,21 +223,20 @@ class AbsoluteScheduleEntry(BaseModel):
         return f"{self.start_date} = {self.value}"
 
 
-class Schedule:
+class Schedule(List[ScheduleEntry]):
     """Schedule
 
     Represents a schedule on a Nightscout profile.
 
     """
 
-    def __init__(self, entries, timezone):
-        super().__init__()
-        self.entries = entries
-        self.entries.sort(key=lambda e: e.offset)
+    def __init__(self, entries: List[ScheduleEntry], timezone):
+        entries.sort(key=lambda e: e.offset)
+        super().__init__(entries)
         self.timezone = timezone
 
     # Expects a localized timestamp here
-    def value_at_date(self, local_date):
+    def value_at_date(self, local_date: datetime) -> ScheduleEntry:
         """Get scheduled value at given date
 
         Args:
@@ -250,9 +249,13 @@ class Schedule:
         offset = local_date - local_date.replace(
             hour=0, minute=0, second=0, microsecond=0
         )
-        return [e.value for e in self.entries if e.offset <= offset][-1]
+        return [e.value for e in self if e.offset <= offset][-1]
 
-    def between(self, start_date, end_date):
+    def between(
+        self,
+        start_date: datetime,
+        end_date: datetime,
+    ) -> List[AbsoluteScheduleEntry]:
         """Returns entries between given dates as AbsoluteScheduleEntry objects
 
         Times passed in should be timezone aware.  Times returned will have a tzinfo
@@ -282,9 +285,9 @@ class Schedule:
             )
 
         start_index = 0
-        end_index = len(self.entries)
+        end_index = len(self)
 
-        for index, item in enumerate(self.entries):
+        for index, item in enumerate(self):
             if start_offset >= item.offset:
                 start_index = index
             if end_offset < item.offset:
@@ -293,7 +296,7 @@ class Schedule:
 
         return [
             AbsoluteScheduleEntry(reference_date + entry.offset, entry.value)
-            for entry in self.entries[start_index:end_index]
+            for entry in self[start_index:end_index]
         ]
 
     @classmethod
@@ -390,7 +393,7 @@ class ProfileDefinitionSet(List[ProfileDefinition]):
         profile_definitions.sort(key=lambda d: d.startDate)
         super().__init__(profile_definitions)
 
-    def get_profile_definition_active_at(self, date):
+    def get_profile_definition_active_at(self, date: datetime) -> ProfileDefinition:
         """Get the profile definition active at a given datetime
 
         Args:
@@ -407,43 +410,6 @@ class ProfileDefinitionSet(List[ProfileDefinition]):
         """Returns an array of ProfileDefinition from an array of json dicts"""
         defs = [ProfileDefinition.new_from_json_dict(d) for d in data]
         return cls(defs)
-
-
-class DeviceStatus(BaseModel):
-    """DeviceStatus
-
-    Represents a Device on Nightscout. For example a MiaoMiao reader.
-
-    Attributes:
-        device (string): Device type and hostname for example openaps://hostname.
-        created_at (datetime): Created date.
-        openaps (string): OpenAPS devicestatus record.
-        loop (string): Loop devicestatus record.
-        pump (PumpDevice): Pump device.
-        uploader (UploaderBattery): Uploader device's battery.
-        xdripjs (XDripJs): xDripJS device.
-    """
-
-    device: str
-    created_at: datetime
-    openaps: Optional[str] = None
-    loop: Optional[str] = None
-    pump: Optional["PumpDevice"] = None
-    uploader: Optional["UploaderBattery"] = None
-    xdripjs: Optional["XDripJs"] = None
-
-    @classmethod
-    def json_transforms(cls, json_data):
-        if json_data.get("created_at"):
-            json_data["created_at"] = dateutil.parser.parse(json_data["created_at"])
-        if json_data.get("pump"):
-            json_data["pump"] = PumpDevice.new_from_json_dict(json_data["pump"])
-        if json_data.get("uploader"):
-            json_data["uploader"] = UploaderBattery.new_from_json_dict(
-                json_data["uploader"]
-            )
-        if json_data.get("xdripjs"):
-            json_data["xdripjs"] = XDripJs.new_from_json_dict(json_data["xdripjs"])
 
 
 class XDripJs(BaseModel):
@@ -522,33 +488,6 @@ class UploaderBattery(BaseModel):
     type: Optional[str] = None
 
 
-class PumpDevice(BaseModel):
-    """PumpDevice
-
-    Represents a Pump device on Nightscout.
-
-    Attributes:
-        clock (datetime): Clock datetime.
-        battery (PumpBattery): Pump battery details.
-        reservoir (float): Amount of insulin remaining in pump reservoir.
-        status (PumpStatus): Pump status details.
-    """
-
-    clock: Optional[datetime] = None
-    battery: Optional["PumpBattery"] = None
-    reservoir: Optional[float] = None
-    status: Optional["PumpStatus"] = None
-
-    @classmethod
-    def json_transforms(cls, json_data):
-        if json_data.get("clock"):
-            json_data["clock"] = dateutil.parser.parse(json_data["clock"])
-        if json_data.get("battery"):
-            json_data["battery"] = PumpBattery.new_from_json_dict(json_data["battery"])
-        if json_data.get("status"):
-            json_data["status"] = PumpStatus.new_from_json_dict(json_data["status"])
-
-
 class PumpBattery(BaseModel):
     """PumpBattery
 
@@ -570,8 +509,8 @@ class PumpStatus(BaseModel):
 
     Attributes:
         status (string): Pump Status String.
-        bolusing (boolean): Is Pump Bolusing.
-        suspended (boolean): Is Pump Suspended.
+        bolusing (bool): Is Pump Bolusing.
+        suspended (bool): Is Pump Suspended.
         timestamp (datetime): Date time of entry.
     """
 
@@ -590,3 +529,67 @@ class PumpStatus(BaseModel):
                 )
             else:
                 json_data["timestamp"] = dateutil.parser.parse(timestamp)
+
+
+class PumpDevice(BaseModel):
+    """PumpDevice
+
+    Represents a Pump device on Nightscout.
+
+    Attributes:
+        clock (datetime): Clock datetime.
+        battery (PumpBattery): Pump battery details.
+        reservoir (float): Amount of insulin remaining in pump reservoir.
+        status (PumpStatus): Pump status details.
+    """
+
+    clock: Optional[datetime] = None
+    battery: Optional[PumpBattery] = None
+    reservoir: Optional[float] = None
+    status: Optional[PumpStatus] = None
+
+    @classmethod
+    def json_transforms(cls, json_data):
+        if json_data.get("clock"):
+            json_data["clock"] = dateutil.parser.parse(json_data["clock"])
+        if json_data.get("battery"):
+            json_data["battery"] = PumpBattery.new_from_json_dict(json_data["battery"])
+        if json_data.get("status"):
+            json_data["status"] = PumpStatus.new_from_json_dict(json_data["status"])
+
+
+class DeviceStatus(BaseModel):
+    """DeviceStatus
+
+    Represents a Device on Nightscout. For example a MiaoMiao reader.
+
+    Attributes:
+        device (string): Device type and hostname for example openaps://hostname.
+        created_at (datetime): Created date.
+        openaps (string): OpenAPS devicestatus record.
+        loop (string): Loop devicestatus record.
+        pump (PumpDevice): Pump device.
+        uploader (UploaderBattery): Uploader device's battery.
+        xdripjs (XDripJs): xDripJS device.
+    """
+
+    device: str
+    created_at: datetime
+    openaps: Optional[str] = None
+    loop: Optional[str] = None
+    pump: Optional[PumpDevice] = None
+    uploader: Optional[UploaderBattery] = None
+    xdripjs: Optional[XDripJs] = None
+
+    @classmethod
+    def json_transforms(cls, json_data):
+        if json_data.get("created_at"):
+            json_data["created_at"] = dateutil.parser.parse(json_data["created_at"])
+        if json_data.get("pump"):
+            json_data["pump"] = PumpDevice.new_from_json_dict(json_data["pump"])
+        if json_data.get("uploader"):
+            json_data["uploader"] = UploaderBattery.new_from_json_dict(
+                json_data["uploader"]
+            )
+        if json_data.get("xdripjs"):
+            json_data["xdripjs"] = XDripJs.new_from_json_dict(json_data["xdripjs"])

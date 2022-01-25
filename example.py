@@ -1,5 +1,5 @@
 # pylint: disable=missing-module-docstring
-# pyright: basic
+# pyright: strict
 import asyncio
 import datetime
 import sys
