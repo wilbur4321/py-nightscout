@@ -6,18 +6,17 @@ from py_nightscout.models import (
 )
 from datetime import datetime, timedelta
 import pytz
-from dateutil import tz
 
 
 def test_schedule_conversion_to_absolute_time():
     # Schedule should be fixed offset, to match the pump's date math
-    schedule_tz = tz.tzoffset(None, -(5 * 60 * 60))  # UTC-5
+    schedule_tz = pytz.timezone("Etc/GMT+5")
     schedule = Schedule(
         [
-            ScheduleEntry(timedelta(hours=0), 1),
-            ScheduleEntry(timedelta(hours=6), 0.7),
-            ScheduleEntry(timedelta(hours=12), 0.8),
-            ScheduleEntry(timedelta(hours=22), 0.9),
+            ScheduleEntry(offset=timedelta(hours=0), value=1),
+            ScheduleEntry(offset=timedelta(hours=6), value=0.7),
+            ScheduleEntry(offset=timedelta(hours=12), value=0.8),
+            ScheduleEntry(offset=timedelta(hours=22), value=0.9),
         ],
         schedule_tz,
     )

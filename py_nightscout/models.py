@@ -1,17 +1,18 @@
 """A library that provides a Python interface to Nightscout"""
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 
 import dateutil.parser
 import pytz
 
-# pylint: disable=no-member
+
+JsonDict = Dict[str, Any]
 
 
 class BaseModel:
     """Base class for models"""
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any):
         self._json = None
 
         attrs = dir(self)
@@ -22,11 +23,11 @@ class BaseModel:
                 setattr(self, key, val)
 
     @classmethod
-    def json_transforms(cls, json_data):
+    def json_transforms(cls, json_data: JsonDict) -> None:
         """Transform the given JSON into the right key/value pairs for the class"""
 
     @classmethod
-    def new_from_json_dict(cls, data, **kwargs):
+    def new_from_json_dict(cls, data: JsonDict, **kwargs: Any):
         """Calls the `json_transforms` method, and then the class' `__init__` with
         the args in the dictionary
         """
@@ -107,7 +108,7 @@ class SGV(BaseModel):
     device: str
 
     @classmethod
-    def json_transforms(cls, json_data):
+    def json_transforms(cls, json_data: JsonDict) -> None:
         date_string = json_data.get("dateString")
         if date_string:
             json_data["date"] = dateutil.parser.parse(date_string)
@@ -170,7 +171,7 @@ class Treatment(BaseModel):
         return f"{self.timestamp} {self.eventType}"
 
     @classmethod
-    def json_transforms(cls, json_data):
+    def json_transforms(cls, json_data: JsonDict) -> None:
         timestamp = json_data.get("timestamp")
         if timestamp:
             if isinstance(timestamp, int):
@@ -193,28 +194,30 @@ class ScheduleEntry(BaseModel):
         value (float): The value of the entry.
     """
 
-    def __init__(self, offset, value):
-        super().__init__()
-        self.offset = offset
-        self.value = value
+    offset: timedelta
+    value: float
 
     @classmethod
-    def new_from_json_dict(cls, data, **kwargs):
-        seconds_offset = data.get("timeAsSeconds")
-        if seconds_offset is None:
-            hours, minutes = data.get("time").split(":")
+    def json_transforms(cls, json_data: JsonDict) -> None:
+        seconds_offset = json_data.get("timeAsSeconds")
+        if seconds_offset is not None:
+            seconds_offset = float(seconds_offset)
+        else:
+            hours, minutes = cast(str, json_data.get("time")).split(":")
             seconds_offset = int(hours) * 60 * 60 + int(minutes) * 60
-        offset_in_seconds = int(seconds_offset)
-        return cls(timedelta(seconds=offset_in_seconds), float(data["value"]))
+        json_data["offset"] = timedelta(seconds=seconds_offset)
+        json_data["value"] = float(json_data["value"])
 
 
-class AbsoluteScheduleEntry(BaseModel):
+class AbsoluteScheduleEntry:
     """AbsoluteScheduleEntry
 
     A ScheduleEntry at an absolute time"""
 
-    def __init__(self, start_date, value):
-        super().__init__()
+    start_date: datetime
+    value: float
+
+    def __init__(self, start_date: datetime, value: float):
         self.start_date = start_date
         self.value = value
 
@@ -229,13 +232,13 @@ class Schedule(List[ScheduleEntry]):
 
     """
 
-    def __init__(self, entries: List[ScheduleEntry], timezone):
+    def __init__(self, entries: List[ScheduleEntry], timezone: pytz.BaseTzInfo):
         entries.sort(key=lambda e: e.offset)
         super().__init__(entries)
         self.timezone = timezone
 
     # Expects a localized timestamp here
-    def value_at_date(self, local_date: datetime) -> ScheduleEntry:
+    def value_at_date(self, local_date: datetime) -> float:
         """Get scheduled value at given date
 
         Args:
@@ -299,7 +302,11 @@ class Schedule(List[ScheduleEntry]):
         ]
 
     @classmethod
-    def new_from_json_array(cls, data, timezone, **kwargs):
+    def new_from_json_array(
+        cls,
+        data: List[JsonDict],
+        timezone: pytz.BaseTzInfo,
+    ) -> "Schedule":
         """Creates a `Schedule` instance from a json array"""
         entries = [ScheduleEntry.new_from_json_dict(d) for d in data]
         return cls(entries, timezone)
@@ -331,11 +338,12 @@ class Profile(BaseModel):
     target_high: Optional[Schedule] = None
 
     @classmethod
-    def json_transforms(cls, json_data):
-        timezone = None
-        if json_data.get("timezone"):
-            timezone = pytz.timezone(json_data.get("timezone"))
-            json_data["timezone"] = timezone
+    def json_transforms(cls, json_data: JsonDict) -> None:
+        timezone_str = json_data.get("timezone")
+        assert isinstance(timezone_str, str)
+        timezone = pytz.timezone(timezone_str)
+        json_data["timezone"] = timezone
+
         for key in ["carbratio", "sens", "target_low", "target_high", "basal"]:
             val = json_data.get(key)
             if val is not None:
@@ -365,7 +373,7 @@ class ProfileDefinition(BaseModel):
         return self.store[self.defaultProfile]
 
     @classmethod
-    def json_transforms(cls, json_data):
+    def json_transforms(cls, json_data: JsonDict) -> None:
         if json_data.get("startDate"):
             json_data["startDate"] = dateutil.parser.parse(json_data["startDate"])
         if json_data.get("created_at"):
@@ -405,7 +413,7 @@ class ProfileDefinitionSet(List[ProfileDefinition]):
         return [d for d in self if d.startDate <= date][-1]
 
     @classmethod
-    def new_from_json_array(cls, data):
+    def new_from_json_array(cls, data: List[JsonDict]) -> "ProfileDefinitionSet":
         """Returns an array of ProfileDefinition from an array of json dicts"""
         defs = [ProfileDefinition.new_from_json_dict(d) for d in data]
         return cls(defs)
@@ -519,7 +527,7 @@ class PumpStatus(BaseModel):
     timestamp: Optional[datetime] = None
 
     @classmethod
-    def json_transforms(cls, json_data):
+    def json_transforms(cls, json_data: JsonDict) -> None:
         timestamp = json_data.get("timestamp")
         if timestamp:
             if isinstance(timestamp, int):
@@ -548,7 +556,7 @@ class PumpDevice(BaseModel):
     status: Optional[PumpStatus] = None
 
     @classmethod
-    def json_transforms(cls, json_data):
+    def json_transforms(cls, json_data: JsonDict) -> None:
         if json_data.get("clock"):
             json_data["clock"] = dateutil.parser.parse(json_data["clock"])
         if json_data.get("battery"):
@@ -581,7 +589,7 @@ class DeviceStatus(BaseModel):
     xdripjs: Optional[XDripJs] = None
 
     @classmethod
-    def json_transforms(cls, json_data):
+    def json_transforms(cls, json_data: JsonDict) -> None:
         if json_data.get("created_at"):
             json_data["created_at"] = dateutil.parser.parse(json_data["created_at"])
         if json_data.get("pump"):

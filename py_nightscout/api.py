@@ -1,9 +1,15 @@
 """A library that provides a Python interface to Nightscout"""
 import hashlib
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, DefaultDict, Dict, List, Optional
 
 from aiohttp import ClientSession, ClientTimeout
-from .models import SGV, ProfileDefinitionSet, ServerStatus, Treatment, DeviceStatus
+from .models import (
+    DeviceStatus,
+    ProfileDefinitionSet,
+    ServerStatus,
+    SGV,
+    Treatment,
+)
 
 
 ParamsDict = Optional[Dict[str, Any]]
@@ -161,10 +167,10 @@ class Api:
             A Dict of DeviceStatus
         """
         results = await self.get_devices_status(params)
-        grouped = {}
+        grouped = DefaultDict[str, List[DeviceStatus]](list)
         for entry in results:
-            grouped.setdefault(entry.device, []).append(entry)
-        output = {}
+            grouped[entry.device].append(entry)
+        output: Dict[str, DeviceStatus] = {}
         for device_name, entries in grouped.items():
             entries.sort(key=lambda x: x.created_at, reverse=True)
             output[device_name] = entries[0]
@@ -172,9 +178,9 @@ class Api:
 
     async def __get(
         self,
-        path,
+        path: str,
         params: ParamsDict = None,
-    ):
+    ) -> Any:
         async def get(session: ClientSession):
             async with session.get(
                 f"{self.server_url}{path}", params=params, **self._api_kwargs
@@ -187,7 +193,7 @@ class Api:
     async def __call(
         self,
         handler: Callable[[ClientSession], Any],
-    ):
+    ) -> Any:
         if not self._session:
             async with ClientSession() as request_session:
                 return await handler(request_session)

@@ -1,0 +1,9 @@
+{
+	"typeCheckingMode": "strict",
+	"include": [
+		".",
+	],
+	"ignore": [
+		"build",
+	],
+}

@@ -8,6 +8,8 @@ import dateutil.parser
 from aioresponses import aioresponses
 import pytz
 
+# pyright: reportUnknownMemberType=none
+
 
 @pytest.fixture(name="api")
 def api_fixture() -> nightscout.Api:
