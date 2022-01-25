@@ -44,7 +44,9 @@ class Api:
     ):
         """Instantiate a new Api object."""
         self.server_url = server_url.strip("/")
-        self._api_kwargs = {"headers": Api.__request_headers(access_token, api_secret)}
+        self._api_kwargs: Dict[str, Any] = {
+            "headers": Api.__request_headers(access_token, api_secret)
+        }
         if timeout:
             self._api_kwargs["timeout"] = timeout
         self._session = session

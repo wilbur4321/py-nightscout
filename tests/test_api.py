@@ -124,6 +124,7 @@ async def test_devices_status(api: nightscout.Api):
 
         assert 10 == len(devices_status)
         assert "Tomato" == devices_status[0].device
+        assert devices_status[0].uploader is not None
         assert 20 == devices_status[0].uploader.battery
 
 
@@ -144,11 +145,13 @@ async def test_latest_devices_status(api: nightscout.Api):
             dateutil.parser.parse("2021-10-30T22:36:31.901Z")
             == devices_status["Tomato"].created_at
         )
+        assert devices_status["Tomato"].uploader is not None
         assert 20 == devices_status["Tomato"].uploader.battery
         assert "BRIDGE" == devices_status["Tomato"].uploader.type
         assert (
             dateutil.parser.parse("2021-10-30T22:36:31.844Z")
             == devices_status["samsung SM-N986B"].created_at
         )
+        assert devices_status["samsung SM-N986B"].uploader is not None
         assert 69 == devices_status["samsung SM-N986B"].uploader.battery
         assert "PHONE" == devices_status["samsung SM-N986B"].uploader.type

@@ -17,7 +17,7 @@
 			88
 		],
 		"python.analysis.diagnosticMode": "workspace",
-		"python.analysis.typeCheckingMode": "off",
+		"python.analysis.typeCheckingMode": "basic",
 		"python.formatting.provider": "black",
 		"python.formatting.blackArgs": [
 			"--line-length",

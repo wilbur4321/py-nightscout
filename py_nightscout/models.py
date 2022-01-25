@@ -6,7 +6,6 @@ import dateutil.parser
 import pytz
 
 # pylint: disable=no-member
-# pyright: basic
 
 
 class BaseModel:
