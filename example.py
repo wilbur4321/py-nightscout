@@ -84,7 +84,8 @@ async def main():
     print("\nDevices:")
     devices_status = await api.get_latest_devices_status()
     for device, status in devices_status.items():
-        print(f"\t{device} battery: {status.uploader.battery}%")
+        battery = None if not status.uploader else status.uploader.battery
+        print(f"\t{device} battery: {battery}%")
 
 
 if sys.platform == "win32":

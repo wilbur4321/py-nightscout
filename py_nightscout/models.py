@@ -1,19 +1,26 @@
 """A library that provides a Python interface to Nightscout"""
 from datetime import datetime, timedelta
-from typing import Optional
+from typing import Any, Dict, List, Optional
 
 import dateutil.parser
 import pytz
 
 # pylint: disable=no-member
+# pyright: basic
 
 
 class BaseModel:
     """Base class for models"""
 
     def __init__(self, **kwargs):
-        self.param_defaults = {}
         self._json = None
+
+        attrs = dir(self)
+        for key, val in kwargs.items():
+            if key in self.__annotations__ and (
+                key not in attrs or getattr(self, key) is None
+            ):
+                setattr(self, key, val)
 
     @classmethod
     def json_transforms(cls, json_data):
@@ -33,6 +40,26 @@ class BaseModel:
 
         i = cls(**json_data)
         i._json = data
+
+        # verify that evereything non-optional was set
+        missing_keys = set(i.__annotations__.keys()) - set(dir(i))
+        if missing_keys:
+            raise KeyError(
+                f"While deserializing {i.__class__}, "
+                f"keys {missing_keys} should have been present, but were not."
+            )
+
+        # missing_keys = set()
+        # for key in i.__annotations__:
+        #     val = getattr(i, key)
+        #     if val is None:
+        #         missing_keys.add(key)
+        # if missing_keys:
+        #     print(
+        #         f"While deserializing {i.__class__}, "
+        #         f"optional keys {missing_keys} were not set"
+        #     )
+
         return i
 
 
@@ -46,20 +73,14 @@ class ServerStatus(BaseModel):
         version (string): Server version
         name (string): Server name
         apiEnabled (boolean): If the API is enabled
+        settings (Dict[str, Any]): Server settings
     """
 
-    def __init__(self, **kwargs):
-        super().__init__()
-        self.param_defaults = {
-            "status": None,
-            "version": None,
-            "name": None,
-            "apiEnabled": None,
-            "settings": None,
-        }
-
-        for (param, default) in self.param_defaults.items():
-            setattr(self, param, kwargs.get(param, default))
+    status: Optional[str] = None
+    version: Optional[str] = None
+    name: Optional[str] = None
+    apiEnabled: Optional[bool] = None
+    settings: Optional[Dict[str, Any]] = None
 
 
 class SGV(BaseModel):
@@ -78,27 +99,25 @@ class SGV(BaseModel):
             if pulled from Dexcom Share servers
     """
 
-    def __init__(self, **kwargs):
-        super().__init__()
-        self.param_defaults = {
-            "sgv": None,
-            "sgv_mmol": None,
-            "delta": None,
-            "delta_mmol": None,
-            "date": None,
-            "direction": None,
-            "device": None,
-        }
-
-        for (param, default) in self.param_defaults.items():
-            setattr(self, param, kwargs.get(param, default))
-        self.sgv_mmol = SGV.__mgdl_to_mmol_l(self.sgv)
-        self.delta_mmol = SGV.__mgdl_to_mmol_l(self.delta)
+    sgv: Optional[float] = None
+    sgv_mmol: Optional[float] = None
+    delta: Optional[float] = None
+    delta_mmol: Optional[float] = None
+    date: Optional[datetime] = None
+    direction: Optional[str] = None
+    device: Optional[str] = None
 
     @classmethod
     def json_transforms(cls, json_data):
-        if json_data.get("dateString"):
-            json_data["date"] = dateutil.parser.parse(json_data["dateString"])
+        date_string = json_data.get("dateString")
+        if date_string:
+            json_data["date"] = dateutil.parser.parse(date_string)
+        sgv = json_data.get("sgv")
+        if sgv is not None:
+            json_data["sgv_mmol"] = SGV.__mgdl_to_mmol_l(sgv)
+        delta = json_data.get("delta")
+        if delta is not None:
+            json_data["delta_mmol"] = SGV.__mgdl_to_mmol_l(delta)
 
     @staticmethod
     def __mgdl_to_mmol_l(mgdl: Optional[float]) -> Optional[float]:
@@ -127,33 +146,26 @@ class Treatment(BaseModel):
         glucose (int): Glucose value for a BG check, in mg/dl.
     """
 
-    def __init__(self, **kwargs):
-        super().__init__()
-        self.param_defaults = {
-            "temp": None,
-            "enteredBy": None,
-            "eventType": None,
-            "glucose": None,
-            "glucoseType": None,
-            "units": None,
-            "device": None,
-            "created_at": None,
-            "timestamp": None,
-            "absolute": None,
-            "rate": None,
-            "duration": None,
-            "carbs": None,
-            "insulin": None,
-            "unabsorbed": None,
-            "suspended": None,
-            "type": None,
-            "programmed": None,
-            "foodType": None,
-            "absorptionTime": None,
-        }
-
-        for (param, default) in self.param_defaults.items():
-            setattr(self, param, kwargs.get(param, default))
+    temp: Optional[str] = None
+    enteredBy: Optional[str] = None
+    eventType: Optional[str] = None
+    glucose: Optional[int] = None
+    glucoseType: Optional[str] = None
+    units: Optional[str] = None
+    device: Optional[str] = None
+    created_at: Optional[datetime] = None
+    timestamp: Optional[datetime] = None
+    absolute: Optional[str] = None
+    rate: Optional[str] = None
+    duration: Optional[str] = None
+    carbs: Optional[int] = None
+    insulin: Optional[float] = None
+    unabsorbed: Optional[str] = None
+    suspended: Optional[str] = None
+    type: Optional[str] = None
+    programmed: Optional[float] = None
+    foodType: Optional[str] = None
+    absorptionTime: Optional[str] = None
 
     def __repr__(self):
         return f"{self.timestamp} {self.eventType}"
@@ -286,9 +298,7 @@ class Schedule:
 
     @classmethod
     def new_from_json_array(cls, data, timezone, **kwargs):
-        """Calls the `json_transforms` method, and then the class' `__init__` with
-        the args in the dictionary
-        """
+        """Creates a `Schedule` instance from a json array"""
         entries = [ScheduleEntry.new_from_json_dict(d) for d in data]
         return cls(entries, timezone)
 
@@ -308,22 +318,15 @@ class Profile(BaseModel):
         target_high (Schedule): A schedule the high end of the target range, in mg/dl.
     """
 
-    def __init__(self, **kwargs):
-        super().__init__()
-        self.param_defaults = {
-            "dia": None,
-            "carb_ratio": None,
-            "carbs_hr": None,
-            "delay": None,
-            "sens": None,
-            "timezone": None,
-            "basal": None,
-            "target_low": None,
-            "target_high": None,
-        }
-
-        for (param, default) in self.param_defaults.items():
-            setattr(self, param, kwargs.get(param, default))
+    dia: Optional[float] = None
+    carbratio: Optional[Schedule] = None
+    carbs_hr: Optional[int] = None
+    delay: Optional[int] = None
+    sens: Optional[Schedule] = None
+    timezone: pytz.BaseTzInfo
+    basal: Schedule
+    target_low: Optional[Schedule] = None
+    target_high: Optional[Schedule] = None
 
     @classmethod
     def json_transforms(cls, json_data):
@@ -331,28 +334,13 @@ class Profile(BaseModel):
         if json_data.get("timezone"):
             timezone = pytz.timezone(json_data.get("timezone"))
             json_data["timezone"] = timezone
-        if json_data.get("carbratio"):
-            json_data["carbratio"] = Schedule.new_from_json_array(
-                json_data.get("carbratio"), timezone
-            )
-        if json_data.get("sens"):
-            json_data["sens"] = Schedule.new_from_json_array(
-                json_data.get("sens"), timezone
-            )
-        if json_data.get("target_low"):
-            json_data["target_low"] = Schedule.new_from_json_array(
-                json_data.get("target_low"), timezone
-            )
-        if json_data.get("target_high"):
-            json_data["target_high"] = Schedule.new_from_json_array(
-                json_data.get("target_high"), timezone
-            )
-        if json_data.get("basal"):
-            json_data["basal"] = Schedule.new_from_json_array(
-                json_data.get("basal"), timezone
-            )
-        if json_data.get("dia"):
-            json_data["dia"] = float(json_data["dia"])
+        for key in ["carbratio", "sens", "target_low", "target_high", "basal"]:
+            val = json_data.get(key)
+            if val is not None:
+                json_data[key] = Schedule.new_from_json_array(val, timezone)
+        val = json_data.get("dia")
+        if val is not None:
+            json_data["dia"] = float(val)
 
 
 class ProfileDefinition(BaseModel):
@@ -364,18 +352,11 @@ class ProfileDefinition(BaseModel):
         startDate (datetime): The time these profiles start at.
     """
 
-    def __init__(self, **kwargs):
-        super().__init__()
-        self.param_defaults = {
-            "defaultProfile": None,
-            "store": None,
-            "startDate": None,
-            "created_at": None,
-            "units": None,
-        }
-
-        for (param, default) in self.param_defaults.items():
-            setattr(self, param, kwargs.get(param, default))
+    defaultProfile: str
+    store: Dict[str, Profile]
+    startDate: datetime
+    created_at: datetime
+    units: str
 
     def get_default_profile(self):
         """Returns the default ProfileDefinition"""
@@ -396,7 +377,7 @@ class ProfileDefinition(BaseModel):
             json_data["store"] = store
 
 
-class ProfileDefinitionSet:
+class ProfileDefinitionSet(List[ProfileDefinition]):
     """ProfileDefinitionSet
 
     Represents a set of Nightscout profile definitions, each covering a range of time
@@ -405,10 +386,9 @@ class ProfileDefinitionSet:
 
     """
 
-    def __init__(self, profile_definitions):
-        super().__init__()
-        self.profile_definitions = profile_definitions
-        self.profile_definitions.sort(key=lambda d: d.startDate)
+    def __init__(self, profile_definitions: List[ProfileDefinition]):
+        profile_definitions.sort(key=lambda d: d.startDate)
+        super().__init__(profile_definitions)
 
     def get_profile_definition_active_at(self, date):
         """Get the profile definition active at a given datetime
@@ -420,7 +400,7 @@ class ProfileDefinitionSet:
             A ProfileDefinition object valid for the specified time.
 
         """
-        return [d for d in self.profile_definitions if d.startDate <= date][-1]
+        return [d for d in self if d.startDate <= date][-1]
 
     @classmethod
     def new_from_json_array(cls, data):
@@ -444,20 +424,13 @@ class DeviceStatus(BaseModel):
         xdripjs (XDripJs): xDripJS device.
     """
 
-    def __init__(self, **kwargs):
-        super().__init__()
-        self.param_defaults = {
-            "device": None,
-            "created_at": None,
-            "openaps": None,
-            "loop": None,
-            "pump": None,
-            "uploader": None,
-            "xdripjs": None,
-        }
-
-        for (param, default) in self.param_defaults.items():
-            setattr(self, param, kwargs.get(param, default))
+    device: str
+    created_at: datetime
+    openaps: Optional[str] = None
+    loop: Optional[str] = None
+    pump: Optional["PumpDevice"] = None
+    uploader: Optional["UploaderBattery"] = None
+    xdripjs: Optional["XDripJs"] = None
 
     @classmethod
     def json_transforms(cls, json_data):
@@ -506,38 +479,31 @@ class XDripJs(BaseModel):
         resistance (float): Sensor Resistance
     """
 
-    def __init__(self, **kwargs):
-        super().__init__()
-        self.param_defaults = {
-            "state": None,
-            "stateString": None,
-            "stateStringShort": None,
-            "txId": None,
-            "txStatus": None,
-            "txStatusString": None,
-            "txStatusStringShort": None,
-            "txActivation": None,
-            "mode": None,
-            "timestamp": None,
-            "rssi": None,
-            "unfiltered": None,
-            "filtered": None,
-            "noise": None,
-            "noiseString": None,
-            "slope": None,
-            "intercept": None,
-            "calType": None,
-            "lastCalibrationDate": None,
-            "sessionStart": None,
-            "batteryTimestamp": None,
-            "voltagea": None,
-            "voltageb": None,
-            "temperature": None,
-            "resistance": None,
-        }
-
-        for (param, default) in self.param_defaults.items():
-            setattr(self, param, kwargs.get(param, default))
+    state: Optional[int] = None
+    stateString: Optional[str] = None
+    stateStringShort: Optional[str] = None
+    txId: Optional[str] = None
+    txStatus: Optional[float] = None
+    txStatusString: Optional[str] = None
+    txStatusStringShort: Optional[str] = None
+    txActivation: Optional[int] = None
+    mode: Optional[str] = None
+    timestamp: Optional[int] = None
+    rssi: Optional[int] = None
+    unfiltered: Optional[int] = None
+    filtered: Optional[int] = None
+    noise: Optional[int] = None
+    noiseString: Optional[float] = None
+    slope: Optional[float] = None
+    intercept: Optional[int] = None
+    calType: Optional[str] = None
+    lastCalibrationDate: Optional[int] = None
+    sessionStart: Optional[int] = None
+    batteryTimestamp: Optional[int] = None
+    voltagea: Optional[float] = None
+    voltageb: Optional[float] = None
+    temperature: Optional[float] = None
+    resistance: Optional[float] = None
 
 
 class UploaderBattery(BaseModel):
@@ -551,16 +517,9 @@ class UploaderBattery(BaseModel):
         type (string): Uploader type.
     """
 
-    def __init__(self, **kwargs):
-        super().__init__()
-        self.param_defaults = {
-            "batteryVoltage": None,
-            "battery": None,
-            "type": None,
-        }
-
-        for (param, default) in self.param_defaults.items():
-            setattr(self, param, kwargs.get(param, default))
+    batteryVoltage: Optional[float] = None
+    battery: Optional[int] = None
+    type: Optional[str] = None
 
 
 class PumpDevice(BaseModel):
@@ -575,17 +534,10 @@ class PumpDevice(BaseModel):
         status (PumpStatus): Pump status details.
     """
 
-    def __init__(self, **kwargs):
-        super().__init__()
-        self.param_defaults = {
-            "clock": None,
-            "battery": None,
-            "reservoir": None,
-            "status": None,
-        }
-
-        for (param, default) in self.param_defaults.items():
-            setattr(self, param, kwargs.get(param, default))
+    clock: Optional[datetime] = None
+    battery: Optional["PumpBattery"] = None
+    reservoir: Optional[float] = None
+    status: Optional["PumpStatus"] = None
 
     @classmethod
     def json_transforms(cls, json_data):
@@ -607,17 +559,8 @@ class PumpBattery(BaseModel):
         voltage (float): Pump Battery Voltage Level.
     """
 
-    def __init__(self, **kwargs):
-        super().__init__()
-        self.param_defaults = {
-            "clock": None,
-            "battery": None,
-            "reservoir": None,
-            "status": None,
-        }
-
-        for (param, default) in self.param_defaults.items():
-            setattr(self, param, kwargs.get(param, default))
+    status: Optional[str] = None
+    voltage: Optional[float] = None
 
 
 class PumpStatus(BaseModel):
@@ -632,17 +575,10 @@ class PumpStatus(BaseModel):
         timestamp (datetime): Date time of entry.
     """
 
-    def __init__(self, **kwargs):
-        super().__init__()
-        self.param_defaults = {
-            "clock": None,
-            "battery": None,
-            "reservoir": None,
-            "status": None,
-        }
-
-        for (param, default) in self.param_defaults.items():
-            setattr(self, param, kwargs.get(param, default))
+    status: Optional[str] = None
+    bolusing: Optional[bool] = None
+    suspended: Optional[bool] = None
+    timestamp: Optional[datetime] = None
 
     @classmethod
     def json_transforms(cls, json_data):
