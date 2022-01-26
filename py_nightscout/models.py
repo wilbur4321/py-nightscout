@@ -1,12 +1,13 @@
 """A library that provides a Python interface to Nightscout"""
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, cast
+from typing import Any, Dict, List, Optional, Type, TypeVar, cast
 
 import dateutil.parser
 import pytz
 
 
 JsonDict = Dict[str, Any]
+_T = TypeVar("_T", bound="BaseModel")
 
 
 class BaseModel:
@@ -27,7 +28,7 @@ class BaseModel:
         """Transform the given JSON into the right key/value pairs for the class"""
 
     @classmethod
-    def new_from_json_dict(cls, data: JsonDict, **kwargs: Any):
+    def new_from_json_dict(cls: Type[_T], data: JsonDict, **kwargs: Any) -> _T:
         """Calls the `json_transforms` method, and then the class' `__init__` with
         the args in the dictionary
         """
@@ -167,7 +168,7 @@ class Treatment(BaseModel):
     foodType: Optional[str] = None
     absorptionTime: Optional[str] = None
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"{self.timestamp} {self.eventType}"
 
     @classmethod
@@ -221,7 +222,7 @@ class AbsoluteScheduleEntry:
         self.start_date = start_date
         self.value = value
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"{self.start_date} = {self.value}"
 
 
@@ -231,6 +232,8 @@ class Schedule(List[ScheduleEntry]):
     Represents a schedule on a Nightscout profile.
 
     """
+
+    timezone: pytz.BaseTzInfo
 
     def __init__(self, entries: List[ScheduleEntry], timezone: pytz.BaseTzInfo):
         entries.sort(key=lambda e: e.offset)
@@ -368,7 +371,7 @@ class ProfileDefinition(BaseModel):
     created_at: datetime
     units: str
 
-    def get_default_profile(self):
+    def get_default_profile(self) -> Profile:
         """Returns the default ProfileDefinition"""
         return self.store[self.defaultProfile]
 

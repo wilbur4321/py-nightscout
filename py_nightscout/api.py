@@ -39,6 +39,8 @@ class Api:
             >>> print([entry.sgv for entry in entries])
     """
 
+    server_url: str
+
     def __init__(
         self,
         server_url: str,
