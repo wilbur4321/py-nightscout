@@ -15,9 +15,11 @@ RUN apt-get update \
    && export DEBIAN_FRONTEND=noninteractive \
    && apt-get -y install --no-install-recommends vim
 
+# NOTE: (randy): this appears to not work under Windows, sadly
+# USER vscode
+
 # [Optional] If your requirements rarely change, uncomment this section to add them to the image.
 #
-USER vscode
 ENV PATH="/home/vscode/.local/bin:${PATH}"
 COPY requirements.txt /tmp/pip-tmp/
 COPY requirements_dev.txt /tmp/pip-tmp/
