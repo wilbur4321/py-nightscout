@@ -148,14 +148,14 @@ class Treatment(BaseModel):
     """
 
     temp: Optional[str] = None
-    enteredBy: str
+    enteredBy: Optional[str] = None
     eventType: str
     glucose: Optional[int] = None
     glucoseType: Optional[str] = None
     units: Optional[str] = None
     device: Optional[str] = None
     created_at: datetime
-    timestamp: datetime
+    timestamp: Optional[datetime] = None
     absolute: Optional[str] = None
     rate: Optional[str] = None
     duration: Optional[str] = None
