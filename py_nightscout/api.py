@@ -1,6 +1,6 @@
 """A library that provides a Python interface to Nightscout"""
 import hashlib
-from typing import Any, Callable, DefaultDict, Dict, List, Optional
+from typing import Any, Callable, DefaultDict, Dict, List, Optional, Union
 
 from aiohttp import ClientSession, ClientTimeout
 from .models import (
@@ -12,7 +12,7 @@ from .models import (
 )
 
 
-ParamsDict = Optional[Dict[str, Any]]
+ParamsDict = Optional[Dict[str, Union[str, int, float]]]
 
 
 class Api:
